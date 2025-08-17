@@ -1,6 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const LandingPage = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Navigation */}
@@ -8,7 +11,7 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-indigo-600">TaskMate</h1>
+              <h1 className="text-2xl font-bold text-indigo-600">TaskManager</h1>
             </div>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
@@ -21,6 +24,12 @@ const LandingPage = () => {
                 <a href="#contact" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                   Contact
                 </a>
+                <button 
+                  onClick={() => navigate('/auth')}
+                  className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Login / Signup
+                </button>
               </div>
             </div>
             <div className="md:hidden">
@@ -42,7 +51,7 @@ const LandingPage = () => {
               <div className="sm:text-center lg:text-left">
                 <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
                   <span className="block xl:inline">Organize your life with</span>{' '}
-                  <span className="block text-indigo-600 xl:inline">TaskMate</span>
+                  <span className="block text-indigo-600 xl:inline">TaskManager</span>
                 </h1>
                 <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
                   Streamline your productivity with our intuitive task management application. 
@@ -50,9 +59,12 @@ const LandingPage = () => {
                 </p>
                 <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
                   <div className="rounded-md shadow">
-                    <a href="#get-started" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10 transition-colors">
+                    <button 
+                      onClick={() => navigate('/auth')}
+                      className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10 transition-colors"
+                    >
                       Get Started
-                    </a>
+                    </button>
                   </div>
                   <div className="mt-3 sm:mt-0 sm:ml-3">
                     <a href="#learn-more" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 md:py-4 md:text-lg md:px-10 transition-colors">
@@ -143,9 +155,12 @@ const LandingPage = () => {
           <p className="mt-4 text-lg leading-6 text-indigo-200">
             Join thousands of users who have already transformed their productivity.
           </p>
-          <a href="#signup" className="mt-8 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50 sm:w-auto transition-colors">
+          <button 
+            onClick={() => navigate('/auth')}
+            className="mt-8 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50 sm:w-auto transition-colors"
+          >
             Sign up for free
-          </a>
+          </button>
         </div>
       </div>
 
@@ -160,7 +175,7 @@ const LandingPage = () => {
               </p>
             </div>
             <div className="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">
-              <div className="md:grid md:grid-cols-2 md:gap-8">
+              <div className="md:grid md:grid-cols-2 md:gap-x-8">
                 <div>
                   <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Product</h3>
                   <ul className="mt-4 space-y-4">
