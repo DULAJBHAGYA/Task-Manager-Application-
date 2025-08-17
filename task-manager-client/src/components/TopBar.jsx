@@ -5,12 +5,17 @@ const TopBar = ({ setSidebarOpen, setShowAddProject, setShowAddTask, setShowAddE
   const location = useLocation();
   const isProjectsPage = location.pathname === '/projects';
   const isCalendarPage = location.pathname === '/calendar';
+  const isReportsPage = location.pathname === '/reports';
+  const isSettingsPage = location.pathname === '/settings';
   
   const handleAddClick = () => {
     if (isProjectsPage) {
       setShowAddProject(true);
     } else if (isCalendarPage) {
       setShowAddEvent(true);
+    } else if (isReportsPage || isSettingsPage) {
+      // Reports and Settings pages don't have an add action
+      return;
     } else {
       setShowAddTask(true);
     }
@@ -35,6 +40,8 @@ const TopBar = ({ setSidebarOpen, setShowAddProject, setShowAddTask, setShowAddE
           Add Event
         </>
       );
+    } else if (isReportsPage || isSettingsPage) {
+      return null; // No button for reports or settings pages
     }
     return (
       <>
@@ -51,6 +58,10 @@ const TopBar = ({ setSidebarOpen, setShowAddProject, setShowAddTask, setShowAddE
       return "Project Management";
     } else if (isCalendarPage) {
       return "Calendar";
+    } else if (isReportsPage) {
+      return "Reports";
+    } else if (isSettingsPage) {
+      return "Settings";
     }
     return "Task Dashboard";
   };
@@ -70,12 +81,14 @@ const TopBar = ({ setSidebarOpen, setShowAddProject, setShowAddTask, setShowAddE
             </button>
             <h2 className="text-xl font-semibold text-gray-900 ml-2 lg:ml-0">{getPageTitle()}</h2>
           </div>
-          <button
-            onClick={handleAddClick}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            {getButtonText()}
-          </button>
+          {!isReportsPage && !isSettingsPage && (
+            <button
+              onClick={handleAddClick}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              {getButtonText()}
+            </button>
+          )}
         </div>
       </div>
     </div>
