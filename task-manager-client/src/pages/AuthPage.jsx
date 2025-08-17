@@ -23,12 +23,16 @@ const AuthPage = () => {
     e.preventDefault();
     if (isLogin) {
       console.log('Login:', { email: formData.email, password: formData.password });
+      // Navigate to dashboard after successful login
+      navigate('/dashboard');
     } else {
       if (formData.password !== formData.confirmPassword) {
         alert('Passwords do not match!');
         return;
       }
       console.log('Register:', formData);
+      // Navigate to dashboard after successful registration
+      navigate('/dashboard');
     }
   };
 
@@ -54,7 +58,7 @@ const AuthPage = () => {
                 onClick={() => navigate('/')}
                 className="text-2xl font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
               >
-                TaskManager
+                TaskMate
               </button>
             </div>
             <div className="hidden md:block">
@@ -84,7 +88,7 @@ const AuthPage = () => {
           <div className="max-w-lg mx-auto flex flex-col justify-center">
             <div className="mb-8">
               <h2 className="text-4xl font-bold mb-4">
-                {isLogin ? 'Welcome Back!' : 'Join TaskManager'}
+                {isLogin ? 'Welcome Back!' : 'Join TaskMate'}
               </h2>
               <p className="text-indigo-100 text-lg leading-relaxed">
                 {isLogin 

@@ -11,7 +11,7 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-indigo-600">TaskManager</h1>
+              <h1 className="text-2xl font-bold text-indigo-600">TaskMate</h1>
             </div>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
@@ -51,7 +51,7 @@ const LandingPage = () => {
               <div className="sm:text-center lg:text-left">
                 <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
                   <span className="block xl:inline">Organize your life with</span>{' '}
-                  <span className="block text-indigo-600 xl:inline">TaskManager</span>
+                  <span className="block text-indigo-600 xl:inline">TaskMate</span>
                 </h1>
                 <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
                   Streamline your productivity with our intuitive task management application. 
@@ -169,7 +169,7 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8">
           <div className="xl:grid xl:grid-cols-3 xl:gap-8">
             <div className="space-y-8 xl:col-span-1">
-              <h3 className="text-2xl font-bold text-white">TaskManager</h3>
+              <h3 className="text-2xl font-bold text-white">TaskMate</h3>
               <p className="text-gray-400 text-base">
                 Making task management simple and effective for everyone.
               </p>
@@ -197,7 +197,7 @@ const LandingPage = () => {
           </div>
           <div className="mt-12 border-t border-gray-700 pt-8">
             <p className="text-base text-gray-400 xl:text-center">
-              &copy; 2024 TaskManager. All rights reserved.
+              &copy; 2024 TaskMate. All rights reserved.
             </p>
           </div>
         </div>

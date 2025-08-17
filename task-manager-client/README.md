@@ -1,4 +1,4 @@
-# Task Manager Client
+# TaskMate Client
 
 A modern, responsive task management application built with React and Vite, styled with Tailwind CSS.
 
