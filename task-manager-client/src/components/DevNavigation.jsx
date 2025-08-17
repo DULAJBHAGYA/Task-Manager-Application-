@@ -46,6 +46,14 @@ const DevNavigation = () => {
           >
             Projects
           </button>
+          <button
+            onClick={() => navigate('/calendar')}
+            className={`block w-full text-left px-2 py-1 text-xs rounded ${
+              location.pathname === '/calendar' ? 'bg-indigo-600' : 'hover:bg-gray-700'
+            }`}
+          >
+            Calendar
+          </button>
         </div>
       </div>
     </div>

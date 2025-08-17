@@ -4,6 +4,7 @@ import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
 import ProjectsPage from './pages/ProjectsPage';
+import CalendarPage from './pages/CalendarPage';
 import DevNavigation from './components/DevNavigation';
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/calendar" element={<CalendarPage />} />
       </Routes>
       <DevNavigation />
     </div>
