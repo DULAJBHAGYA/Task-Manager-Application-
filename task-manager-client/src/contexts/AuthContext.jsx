@@ -59,8 +59,10 @@ export const AuthProvider = ({ children }) => {
   // Signin function
   const signin = async (credentials) => {
     try {
+      console.log('Signin attempt with:', credentials.email);
       setError(null);
       const response = await apiService.signin(credentials);
+      console.log('Signin response:', response);
       const { user: loggedInUser, token } = response.data;
       
       apiService.setToken(token);
@@ -68,6 +70,7 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true, user: loggedInUser };
     } catch (error) {
+      console.error('Signin error:', error);
       setError(error.message);
       return { success: false, error: error.message };
     }
