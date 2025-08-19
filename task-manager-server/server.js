@@ -28,21 +28,30 @@ const { auth } = require('./middleware/auth');
 app.use(helmet());
 app.use(compression());
 
-// Rate limiting
+// CORS configuration - Allow all origins for development
+app.use(cors({
+  origin: true, // Allow all origins
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
+// Rate limiting - more permissive for development
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  message: 'Too many requests from this IP, please try again later.'
+  max: 1000, // Increased limit for development
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      success: false,
+      message: 'Too many requests from this IP, please try again later.'
+    });
+  }
 });
-app.use('/api/', limiter);
 
-// CORS configuration
-app.use(cors({
-  origin: process.env.NODE_ENV === 'development' 
-    ? '*' 
-    : process.env.CLIENT_URL || 'http://localhost:3000',
-  credentials: true
-}));
+// Apply rate limiting only to auth routes (more sensitive)
+app.use('/api/auth', limiter);
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));

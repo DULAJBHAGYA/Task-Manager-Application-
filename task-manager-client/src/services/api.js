@@ -3,8 +3,10 @@ const API_BASE_URL = 'http://localhost:5001/api';
 // Helper function to handle API responses
 const handleResponse = async (response) => {
   const data = await response.json();
+  console.log('Response data:', data);
   
   if (!response.ok) {
+    console.error('Response not ok:', response.status, data);
     throw new Error(data.message || 'Something went wrong');
   }
   
@@ -49,8 +51,13 @@ class ApiService {
       ...options,
     };
 
+    console.log('Making API request to:', url);
+    console.log('Request config:', config);
+
     try {
       const response = await fetch(url, config);
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
       return await handleResponse(response);
     } catch (error) {
       console.error('API request failed:', error);
@@ -96,8 +103,14 @@ class ApiService {
   }
 
   // Task methods
-  async getTasks() {
-    return this.request('/tasks');
+  async getAllTasks(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/tasks?${queryString}` : '/tasks';
+    return this.request(endpoint);
+  }
+
+  async getTaskById(id) {
+    return this.request(`/tasks/${id}`);
   }
 
   async createTask(taskData) {
@@ -107,22 +120,32 @@ class ApiService {
     });
   }
 
-  async updateTask(taskId, taskData) {
-    return this.request(`/tasks/${taskId}`, {
+  async updateTask(id, taskData) {
+    return this.request(`/tasks/${id}`, {
       method: 'PUT',
       body: JSON.stringify(taskData),
     });
   }
 
-  async deleteTask(taskId) {
-    return this.request(`/tasks/${taskId}`, {
+  async deleteTask(id) {
+    return this.request(`/tasks/${id}`, {
       method: 'DELETE',
     });
   }
 
+  async getTaskStats() {
+    return this.request('/tasks/stats');
+  }
+
   // Project methods
-  async getProjects() {
-    return this.request('/projects');
+  async getAllProjects(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/projects?${queryString}` : '/projects';
+    return this.request(endpoint);
+  }
+
+  async getProjectById(id) {
+    return this.request(`/projects/${id}`);
   }
 
   async createProject(projectData) {
@@ -132,22 +155,28 @@ class ApiService {
     });
   }
 
-  async updateProject(projectId, projectData) {
-    return this.request(`/projects/${projectId}`, {
+  async updateProject(id, projectData) {
+    return this.request(`/projects/${id}`, {
       method: 'PUT',
       body: JSON.stringify(projectData),
     });
   }
 
-  async deleteProject(projectId) {
-    return this.request(`/projects/${projectId}`, {
+  async deleteProject(id) {
+    return this.request(`/projects/${id}`, {
       method: 'DELETE',
     });
   }
 
   // Event methods
-  async getEvents() {
-    return this.request('/events');
+  async getAllEvents(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/events?${queryString}` : '/events';
+    return this.request(endpoint);
+  }
+
+  async getEventById(id) {
+    return this.request(`/events/${id}`);
   }
 
   async createEvent(eventData) {
@@ -157,17 +186,24 @@ class ApiService {
     });
   }
 
-  async updateEvent(eventId, eventData) {
-    return this.request(`/events/${eventId}`, {
+  async updateEvent(id, eventData) {
+    return this.request(`/events/${id}`, {
       method: 'PUT',
       body: JSON.stringify(eventData),
     });
   }
 
-  async deleteEvent(eventId) {
-    return this.request(`/events/${eventId}`, {
+  async deleteEvent(id) {
+    return this.request(`/events/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  // Report methods
+  async getReports(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/reports?${queryString}` : '/reports';
+    return this.request(endpoint);
   }
 }
 

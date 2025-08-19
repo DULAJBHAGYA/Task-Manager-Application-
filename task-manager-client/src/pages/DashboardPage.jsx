@@ -5,9 +5,19 @@ import FiltersAndSearch from '../components/FiltersAndSearch';
 import TaskList from '../components/TaskList';
 import AddTaskForm from '../components/AddTaskForm';
 import EditTaskForm from '../components/EditTaskForm';
+import { useTasks } from '../contexts/TaskContext';
 
 const DashboardPage = () => {
-  const [tasks, setTasks] = useState([]);
+  const { 
+    tasks, 
+    loading, 
+    error, 
+    createTask, 
+    updateTask, 
+    deleteTask, 
+    loadTasks 
+  } = useTasks();
+
   const [showAddTask, setShowAddTask] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -15,56 +25,50 @@ const DashboardPage = () => {
   const [sortBy, setSortBy] = useState('date');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Load tasks from localStorage on component mount
+  // Load tasks from backend on component mount
   useEffect(() => {
-    const savedTasks = localStorage.getItem('tasks');
-    if (savedTasks) {
-      setTasks(JSON.parse(savedTasks));
+    loadTasks();
+  }, [loadTasks]);
+
+  const addTask = async (taskData) => {
+    const result = await createTask(taskData);
+    if (result.success) {
+      setShowAddTask(false);
+    } else {
+      alert('Failed to create task: ' + result.error);
     }
-  }, []);
-
-  // Save tasks to localStorage whenever tasks change
-  useEffect(() => {
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-  }, [tasks]);
-
-  const addTask = (taskData) => {
-    const newTask = {
-      id: Date.now(),
-      title: taskData.title,
-      description: taskData.description || '',
-      status: taskData.status || 'Pending',
-      createdAt: new Date().toISOString(),
-      priority: taskData.priority || 'Medium'
-    };
-    setTasks([...tasks, newTask]);
-    setShowAddTask(false);
   };
 
-  const updateTask = (taskId, updatedData) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId ? { ...task, ...updatedData } : task
-    ));
-    setEditingTask(null);
+  const updateTaskHandler = async (taskId, updatedData) => {
+    const result = await updateTask(taskId, updatedData);
+    if (result.success) {
+      setEditingTask(null);
+    } else {
+      alert('Failed to update task: ' + result.error);
+    }
   };
 
-  const deleteTask = (taskId) => {
+  const deleteTaskHandler = async (taskId) => {
     if (window.confirm('Are you sure you want to delete this task?')) {
-      setTasks(tasks.filter(task => task.id !== taskId));
+      const result = await deleteTask(taskId);
+      if (!result.success) {
+        alert('Failed to delete task: ' + result.error);
+      }
     }
   };
 
-  const changeTaskStatus = (taskId, newStatus) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId ? { ...task, status: newStatus } : task
-    ));
+  const changeTaskStatus = async (taskId, newStatus) => {
+    const result = await updateTask(taskId, { status: newStatus });
+    if (!result.success) {
+      alert('Failed to update task status: ' + result.error);
+    }
   };
 
   // Filter and sort tasks
   const filteredTasks = tasks
     .filter(task => {
       const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           task.description.toLowerCase().includes(searchTerm.toLowerCase());
+                           (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()));
       const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
       return matchesSearch && matchesStatus;
     })
@@ -98,6 +102,31 @@ const DashboardPage = () => {
         {/* Top Bar */}
         <TopBar setSidebarOpen={setSidebarOpen} setShowAddTask={setShowAddTask} />
 
+        {/* Error Display */}
+        {error && (
+          <div className="mx-4 sm:mx-6 lg:mx-8 mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
+            <div className="flex justify-between items-center">
+              <span>{error}</span>
+              <button 
+                onClick={() => window.location.reload()}
+                className="text-red-500 hover:text-red-700"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="mx-4 sm:mx-6 lg:mx-8 mt-4 p-4 bg-blue-100 border border-blue-400 text-blue-700 rounded-md">
+            <div className="flex items-center">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+              Loading tasks...
+            </div>
+          </div>
+        )}
+
         {/* Filters and Search */}
         <FiltersAndSearch 
           searchTerm={searchTerm}
@@ -113,7 +142,7 @@ const DashboardPage = () => {
           <TaskList 
             filteredTasks={filteredTasks}
             setEditingTask={setEditingTask}
-            deleteTask={deleteTask}
+            deleteTask={deleteTaskHandler}
             changeTaskStatus={changeTaskStatus}
           />
         </div>
@@ -140,7 +169,7 @@ const DashboardPage = () => {
             </div>
             <EditTaskForm 
               task={editingTask} 
-              onSubmit={updateTask} 
+              onSubmit={updateTaskHandler} 
               onCancel={() => setEditingTask(null)} 
             />
           </div>

@@ -1,27 +1,34 @@
 const express = require('express');
 const router = express.Router();
+const { auth } = require('../middleware/auth');
+const {
+  getAllTasks,
+  getTaskById,
+  createTask,
+  updateTask,
+  deleteTask,
+  getTaskStats
+} = require('../controllers/taskController');
 
-// Basic task routes structure
-// Implementation details can be added later
+// All routes require authentication
+router.use(auth);
 
-router.get('/', (req, res) => {
-  res.json({ message: 'Get tasks route - implementation needed' });
-});
+// Get all tasks with filtering, searching, and pagination
+router.get('/', getAllTasks);
 
-router.post('/', (req, res) => {
-  res.json({ message: 'Create task route - implementation needed' });
-});
+// Get task statistics
+router.get('/stats', getTaskStats);
 
-router.get('/:id', (req, res) => {
-  res.json({ message: 'Get task by ID route - implementation needed' });
-});
+// Get a single task by ID
+router.get('/:id', getTaskById);
 
-router.put('/:id', (req, res) => {
-  res.json({ message: 'Update task route - implementation needed' });
-});
+// Create a new task
+router.post('/', createTask);
 
-router.delete('/:id', (req, res) => {
-  res.json({ message: 'Delete task route - implementation needed' });
-});
+// Update a task
+router.put('/:id', updateTask);
+
+// Delete a task
+router.delete('/:id', deleteTask);
 
 module.exports = router; 
