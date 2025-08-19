@@ -10,11 +10,20 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Set timezone
 SET timezone = 'UTC';
 
--- Create any additional users or roles if needed
--- CREATE ROLE taskmate_app_user WITH LOGIN PASSWORD 'app_password';
+-- Create the taskmate_user role
+CREATE ROLE taskmate_user WITH LOGIN PASSWORD 'taskmate_password';
 
--- Grant permissions
--- GRANT ALL PRIVILEGES ON DATABASE taskmate TO taskmate_app_user;
+-- Grant necessary permissions to taskmate_user
+ALTER ROLE taskmate_user CREATEDB;
+GRANT ALL PRIVILEGES ON DATABASE taskmate TO taskmate_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO taskmate_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO taskmate_user;
+GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO taskmate_user;
+
+-- Set default privileges for future tables
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO taskmate_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO taskmate_user;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO taskmate_user;
 
 -- Log successful initialization
 DO $$

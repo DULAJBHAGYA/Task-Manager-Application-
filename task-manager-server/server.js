@@ -38,7 +38,9 @@ app.use('/api/', limiter);
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: process.env.NODE_ENV === 'development' 
+    ? '*' 
+    : process.env.CLIENT_URL || 'http://localhost:3000',
   credentials: true
 }));
 
@@ -90,7 +92,7 @@ const startServer = async () => {
     // Sync database (in development)
     if (process.env.NODE_ENV === 'development') {
       await sequelize.sync({ alter: true });
-      console.log('Database synchronized');
+      console.log('Database synchronized - tables updated');
     }
     
     // Start server

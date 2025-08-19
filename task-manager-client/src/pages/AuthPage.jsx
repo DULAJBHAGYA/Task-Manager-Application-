@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import Modal from '../components/Modal';
+import PasswordInput from '../components/PasswordInput';
+import { validatePassword } from '../utils/passwordValidation';
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const { signup, signin, error, clearError, isAuthenticated } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info' });
+  const [passwordValidation, setPasswordValidation] = useState({ isValid: false, errors: [] });
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -12,6 +20,18 @@ const AuthPage = () => {
     confirmPassword: ''
   });
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Clear error when switching modes
+  useEffect(() => {
+    clearError();
+  }, [isLogin, clearError]);
+
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
@@ -19,25 +39,115 @@ const AuthPage = () => {
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (isLogin) {
-      console.log('Login:', { email: formData.email, password: formData.password });
-      // Navigate to dashboard after successful login
-      navigate('/dashboard');
-    } else {
-      if (formData.password !== formData.confirmPassword) {
-        alert('Passwords do not match!');
-        return;
+  const handlePasswordValidationChange = (validation) => {
+    setPasswordValidation(validation);
+  };
+
+  const showModal = (title, message, type = 'info') => {
+    setModal({ isOpen: true, title, message, type });
+  };
+
+  const closeModal = () => {
+    setModal({ isOpen: false, title: '', message: '', type: 'info' });
+  };
+
+  const validateForm = () => {
+    const errors = [];
+
+    if (!isLogin) {
+      if (!formData.firstName.trim()) {
+        errors.push('First name is required');
       }
-      console.log('Register:', formData);
-      // Navigate to dashboard after successful registration
-      navigate('/dashboard');
+      if (!formData.lastName.trim()) {
+        errors.push('Last name is required');
+      }
+    }
+
+    if (!formData.email.trim()) {
+      errors.push('Email is required');
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.push('Please enter a valid email address');
+    }
+
+    if (!formData.password) {
+      errors.push('Password is required');
+    } else if (!isLogin && !passwordValidation.isValid) {
+      errors.push('Password does not meet requirements');
+    }
+
+    if (!isLogin && formData.password !== formData.confirmPassword) {
+      errors.push('Passwords do not match');
+    }
+
+    return errors;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    clearError();
+
+    // Validate form
+    const formErrors = validateForm();
+    if (formErrors.length > 0) {
+      showModal('Validation Error', formErrors.join('\n'), 'error');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      if (isLogin) {
+        // Handle login
+        const result = await signin({
+          email: formData.email,
+          password: formData.password
+        });
+
+        if (result.success) {
+          showModal('Success', 'Login successful! Redirecting to dashboard...', 'success');
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 1500);
+        } else {
+          showModal('Login Failed', result.error || 'Login failed. Please try again.', 'error');
+        }
+      } else {
+        // Handle registration
+        const result = await signup({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password
+        });
+
+        if (result.success) {
+          showModal('Registration Successful', 'Account created successfully! Please sign in with your new account.', 'success');
+          setTimeout(() => {
+            setIsLogin(true);
+            setFormData({
+              firstName: '',
+              lastName: '',
+              email: formData.email, // Keep email for convenience
+              password: '',
+              confirmPassword: ''
+            });
+            setPasswordValidation({ isValid: false, errors: [] });
+          }, 2000);
+        } else {
+          showModal('Registration Failed', result.error || 'Registration failed. Please try again.', 'error');
+        }
+      }
+    } catch (error) {
+      console.error('Authentication error:', error);
+      showModal('Error', 'An unexpected error occurred. Please try again.', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   const toggleMode = () => {
     setIsLogin(!isLogin);
+    clearError();
     setFormData({
       firstName: '',
       lastName: '',
@@ -45,6 +155,7 @@ const AuthPage = () => {
       password: '',
       confirmPassword: ''
     });
+    setPasswordValidation({ isValid: false, errors: [] });
   };
 
   return (
@@ -150,6 +261,13 @@ const AuthPage = () => {
               </p>
             </div>
 
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-md">
+                {error}
+              </div>
+            )}
+
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
               {!isLogin && (
@@ -205,38 +323,25 @@ const AuthPage = () => {
                 />
               </div>
 
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                  placeholder="••••••••"
-                />
-              </div>
+              <PasswordInput
+                value={formData.password}
+                onChange={handleInputChange}
+                onValidationChange={handlePasswordValidationChange}
+                showValidation={!isLogin}
+                name="password"
+                label="Password"
+                placeholder="••••••••"
+              />
 
               {!isLogin && (
-                <div>
-                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                    Confirm Password
-                  </label>
-                  <input
-                    type="password"
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                    placeholder="••••••••"
-                  />
-                </div>
+                <PasswordInput
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  name="confirmPassword"
+                  label="Confirm Password"
+                  placeholder="••••••••"
+                  showValidation={false}
+                />
               )}
 
               {isLogin && (
@@ -260,9 +365,20 @@ const AuthPage = () => {
 
               <button
                 type="submit"
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                disabled={loading}
+                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLogin ? 'Sign In' : 'Create Account'}
+                {loading ? (
+                  <div className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    {isLogin ? 'Signing In...' : 'Creating Account...'}
+                  </div>
+                ) : (
+                  isLogin ? 'Sign In' : 'Create Account'
+                )}
               </button>
             </form>
 
@@ -272,7 +388,8 @@ const AuthPage = () => {
                 {isLogin ? "Don't have an account?" : "Already have an account?"}
                 <button
                   onClick={toggleMode}
-                  className="ml-1 text-indigo-600 hover:text-indigo-500 font-medium transition-colors"
+                  disabled={loading}
+                  className="ml-1 text-indigo-600 hover:text-indigo-500 font-medium transition-colors disabled:opacity-50"
                 >
                   {isLogin ? 'Sign up' : 'Sign in'}
                 </button>
@@ -291,7 +408,11 @@ const AuthPage = () => {
               </div>
 
               <div className="mt-6 grid grid-cols-2 gap-3">
-                <button className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors">
+                <button 
+                  type="button"
+                  disabled={loading}
+                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -300,7 +421,11 @@ const AuthPage = () => {
                   </svg>
                   <span className="ml-2">Google</span>
                 </button>
-                <button className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors">
+                <button 
+                  type="button"
+                  disabled={loading}
+                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
                   </svg>
@@ -311,6 +436,15 @@ const AuthPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal */}
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={closeModal}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+      />
     </div>
   );
 };

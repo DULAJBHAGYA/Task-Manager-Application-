@@ -1,19 +1,14 @@
 const express = require('express');
 const router = express.Router();
+const { signup, signin, getCurrentUser, logout } = require('../controllers/authController');
+const { auth } = require('../middleware/auth');
 
-// Basic auth routes structure
-// Implementation details can be added later
+// Public routes
+router.post('/signup', signup);
+router.post('/signin', signin);
 
-router.post('/register', (req, res) => {
-  res.json({ message: 'Register route - implementation needed' });
-});
-
-router.post('/login', (req, res) => {
-  res.json({ message: 'Login route - implementation needed' });
-});
-
-router.post('/logout', (req, res) => {
-  res.json({ message: 'Logout route - implementation needed' });
-});
+// Protected routes
+router.get('/me', auth, getCurrentUser);
+router.post('/logout', auth, logout);
 
 module.exports = router; 
