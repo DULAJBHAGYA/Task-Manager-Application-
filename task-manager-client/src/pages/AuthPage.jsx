@@ -53,11 +53,16 @@ const AuthPage = () => {
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
+            <div className="flex items-center space-x-3">
               <button 
                 onClick={() => navigate('/')}
-                className="text-2xl font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
+                className="flex items-center space-x-3 text-2xl font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
               >
+                <img 
+                  src="/images/logo.png" 
+                  alt="TaskMate Logo" 
+                  className="w-8 h-8 object-contain"
+                />
                 TaskMate
               </button>
             </div>

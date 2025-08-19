@@ -3,7 +3,14 @@ import React from 'react';
 const SidebarLogo = ({ setSidebarOpen }) => {
   return (
     <div className="flex items-center justify-between p-6 border-b border-gray-200">
-      <h1 className="text-2xl font-bold text-indigo-600">TaskMate</h1>
+      <div className="flex items-center space-x-3">
+        <img 
+          src="/images/logo.png" 
+          alt="TaskMate Logo" 
+          className="w-10 h-10 object-contain"
+        />
+        <h1 className="text-2xl font-bold text-indigo-600">TaskMate</h1>
+      </div>
       <button 
         onClick={() => setSidebarOpen(false)}
         className="lg:hidden text-gray-500 hover:text-gray-700"
