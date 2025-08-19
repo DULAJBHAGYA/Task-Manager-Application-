@@ -2,7 +2,7 @@
 
 A Node.js backend server for the TaskMate task management application, built with Express.js and PostgreSQL.
 
-## 🚀 Features
+## Features
 
 - **User Management**: Authentication, authorization, and user profiles
 - **Task Management**: CRUD operations for tasks with status tracking
@@ -24,7 +24,7 @@ A Node.js backend server for the TaskMate task management application, built wit
 - **Logging**: Winston
 - **Email**: Nodemailer
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 task-manager-server/
@@ -56,7 +56,7 @@ task-manager-server/
 └── README.md               # Project documentation
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -102,7 +102,7 @@ task-manager-server/
    npm start
    ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -140,7 +140,7 @@ EMAIL_FROM=TaskMate <noreply@taskmate.com>
 
 The server automatically connects to PostgreSQL using the environment variables. Make sure your PostgreSQL server is running and accessible.
 
-## 📊 Database Models
+## Database Models
 
 ### User Model
 - Personal information (name, email, avatar)
@@ -166,7 +166,7 @@ The server automatically connects to PostgreSQL using the environment variables.
 - Attendee management
 - Recurring event support
 
-## 🚀 Available Scripts
+## Available Scripts
 
 - `npm start` - Start production server
 - `npm run dev` - Start development server with nodemon
@@ -177,7 +177,7 @@ The server automatically connects to PostgreSQL using the environment variables.
 - `npm run db:seed` - Seed database
 - `npm run db:reset` - Reset database (drop, create, migrate, seed)
 
-## 🔌 API Endpoints
+## API Endpoints
 
 ### Authentication
 - `POST /api/auth/register` - User registration
@@ -217,7 +217,7 @@ The server automatically connects to PostgreSQL using the environment variables.
 - `GET /api/reports/projects` - Get project reports
 - `GET /api/reports/analytics` - Get analytics data
 
-## 🔒 Security Features
+## Security Features
 
 - **JWT Authentication**: Secure token-based authentication
 - **Password Hashing**: Bcrypt password encryption
@@ -226,7 +226,7 @@ The server automatically connects to PostgreSQL using the environment variables.
 - **CORS Protection**: Cross-origin resource sharing control
 - **Helmet Security**: Security headers middleware
 
-## 📱 API Response Format
+## API Response Format
 
 All API responses follow a consistent format:
 
@@ -252,7 +252,7 @@ Error responses:
 }
 ```
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # Run all tests
@@ -265,7 +265,7 @@ npm run test:watch
 npm run test:coverage
 ```
 
-## 📝 Development
+## Development
 
 ### Code Style
 
@@ -284,7 +284,7 @@ For production deployments, use proper migrations instead of `sync()`:
 npm run db:migrate
 ```
 
-## 🚀 Deployment
+## Deployment
 
 ### Production Build
 
@@ -308,7 +308,7 @@ Ensure all production environment variables are properly set:
 - Configure connection pooling
 - Monitor database performance
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -317,11 +317,11 @@ Ensure all production environment variables are properly set:
 5. Ensure all tests pass
 6. Submit a pull request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License.
 
-## 🆘 Support
+## Support
 
 For support and questions:
 - Check the documentation
@@ -330,4 +330,4 @@ For support and questions:
 
 ---
 
-**TaskMate Backend** - Powering the future of task management! 🚀 
+**TaskMate Backend** - Powering the future of task management! 

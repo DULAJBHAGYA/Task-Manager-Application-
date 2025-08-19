@@ -7,10 +7,10 @@ const morgan = require('morgan');
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
-// Import database connection
-const { sequelize } = require('./config/database');
+// Import database connection and models
+const { sequelize, User, Task, Project, Event } = require('./models');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -85,22 +85,22 @@ const startServer = async () => {
   try {
     // Test database connection
     await sequelize.authenticate();
-    console.log('✅ Connected to PostgreSQL database');
+    console.log('Connected to PostgreSQL database');
     
     // Sync database (in development)
     if (process.env.NODE_ENV === 'development') {
       await sequelize.sync({ alter: true });
-      console.log('✅ Database synchronized');
+      console.log('Database synchronized');
     }
     
     // Start server
     app.listen(PORT, () => {
-      console.log(`🚀 TaskMate Server running on port ${PORT}`);
-      console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+      console.log(`TaskMate Server running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`Health check: http://localhost:${PORT}/health`);
     });
   } catch (error) {
-    console.error('❌ Database connection error:', error);
+    console.error('Database connection error:', error);
     process.exit(1);
   }
 };

@@ -10,7 +10,12 @@ const LandingPage = () => {
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
+            <div className="flex items-center space-x-3">
+              <img 
+                src="/images/logo.png" 
+                alt="TaskMate Logo" 
+                className="w-8 h-8 object-contain"
+              />
               <h1 className="text-2xl font-bold text-indigo-600">TaskMate</h1>
             </div>
             <div className="hidden md:block">
@@ -160,7 +165,14 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8">
           <div className="xl:grid xl:grid-cols-3 xl:gap-8">
             <div className="space-y-8 xl:col-span-1">
-              <h3 className="text-2xl font-bold text-white">TaskMate</h3>
+              <div className="flex items-center space-x-3">
+                <img 
+                  src="/images/logo.png" 
+                  alt="TaskMate Logo" 
+                  className="w-8 h-8 object-contain"
+                />
+                <h3 className="text-2xl font-bold text-white">TaskMate</h3>
+              </div>
               <p className="text-gray-400 text-base">
                 Making task management simple and effective for everyone.
               </p>
