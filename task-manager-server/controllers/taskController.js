@@ -538,11 +538,111 @@ const getTaskStats = async (req, res) => {
   }
 };
 
+// Get tasks for calendar view
+const getTasksForCalendar = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { startDate, endDate, projectId } = req.query;
+    
+    // Build where clause
+    const whereClause = {
+      creatorId: userId
+    };
+    
+    // Filter by date range if provided
+    if (startDate && endDate) {
+      whereClause.dueDate = {
+        [Op.between]: [new Date(startDate), new Date(endDate)]
+      };
+    }
+    
+    // Filter by project if provided
+    if (projectId) {
+      whereClause.projectId = projectId;
+    }
+    
+    const tasks = await Task.findAll({
+      where: whereClause,
+      include: [
+        {
+          model: User,
+          as: 'creator',
+          attributes: ['id', 'firstName', 'lastName', 'email']
+        },
+        {
+          model: User,
+          as: 'assignee',
+          attributes: ['id', 'firstName', 'lastName', 'email']
+        },
+        {
+          model: Project,
+          as: 'project',
+          attributes: ['id', 'name', 'description']
+        }
+      ],
+      order: [['dueDate', 'ASC']]
+    });
+    
+    // Format tasks for calendar
+    const calendarTasks = tasks.map(task => ({
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      status: task.status,
+      priority: task.priority,
+      dueDate: task.dueDate,
+      startDate: task.startDate,
+      completedDate: task.completedDate,
+      project: task.project,
+      assignee: task.assignee,
+      creator: task.creator,
+      // Calendar-specific properties
+      allDay: false,
+      start: task.dueDate,
+      end: task.dueDate,
+      color: getTaskColor(task.priority, task.status)
+    }));
+    
+    res.json({
+      success: true,
+      message: 'Calendar tasks retrieved successfully',
+      data: { tasks: calendarTasks }
+    });
+  } catch (error) {
+    console.error('Get calendar tasks error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to retrieve calendar tasks',
+      error: error.message
+    });
+  }
+};
+
+// Helper function to get task color based on priority and status
+const getTaskColor = (priority, status) => {
+  if (status === 'Completed') return '#10B981'; // Green
+  if (status === 'Cancelled') return '#6B7280'; // Gray
+  
+  switch (priority) {
+    case 'Urgent':
+      return '#EF4444'; // Red
+    case 'High':
+      return '#F59E0B'; // Orange
+    case 'Medium':
+      return '#3B82F6'; // Blue
+    case 'Low':
+      return '#8B5CF6'; // Purple
+    default:
+      return '#6B7280'; // Gray
+  }
+};
+
 module.exports = {
   getAllTasks,
   getTaskById,
   createTask,
   updateTask,
   deleteTask,
-  getTaskStats
+  getTaskStats,
+  getTasksForCalendar
 }; 

@@ -1,12 +1,10 @@
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = 'http://localhost:5002/api';
 
 // Helper function to handle API responses
 const handleResponse = async (response) => {
   const data = await response.json();
-  console.log('Response data:', data);
   
   if (!response.ok) {
-    console.error('Response not ok:', response.status, data);
     throw new Error(data.message || 'Something went wrong');
   }
   
@@ -51,13 +49,8 @@ class ApiService {
       ...options,
     };
 
-    console.log('Making API request to:', url);
-    console.log('Request config:', config);
-
     try {
       const response = await fetch(url, config);
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
       return await handleResponse(response);
     } catch (error) {
       console.error('API request failed:', error);
@@ -137,6 +130,12 @@ class ApiService {
     return this.request('/tasks/stats');
   }
 
+  async getTasksForCalendar(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/tasks/calendar?${queryString}` : '/tasks/calendar';
+    return this.request(endpoint);
+  }
+
   // Project methods
   async getAllProjects(params = {}) {
     const queryString = new URLSearchParams(params).toString();
@@ -164,6 +163,32 @@ class ApiService {
 
   async deleteProject(id) {
     return this.request(`/projects/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getProjectStats() {
+    return this.request('/projects/stats');
+  }
+
+  async searchUsers(query, projectId = null) {
+    const params = { query };
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = projectId 
+      ? `/projects/${projectId}/search-users?${queryString}`
+      : `/projects/search-users?${queryString}`;
+    return this.request(endpoint);
+  }
+
+  async addProjectMember(projectId, userId, role = 'Developer') {
+    return this.request(`/projects/${projectId}/members`, {
+      method: 'POST',
+      body: JSON.stringify({ userId, role }),
+    });
+  }
+
+  async removeProjectMember(projectId, userId) {
+    return this.request(`/projects/${projectId}/members/${userId}`, {
       method: 'DELETE',
     });
   }

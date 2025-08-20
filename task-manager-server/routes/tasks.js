@@ -7,7 +7,8 @@ const {
   createTask,
   updateTask,
   deleteTask,
-  getTaskStats
+  getTaskStats,
+  getTasksForCalendar
 } = require('../controllers/taskController');
 
 // All routes require authentication
@@ -18,6 +19,9 @@ router.get('/', getAllTasks);
 
 // Get task statistics
 router.get('/stats', getTaskStats);
+
+// Get tasks for calendar view
+router.get('/calendar', getTasksForCalendar);
 
 // Get a single task by ID
 router.get('/:id', getTaskById);

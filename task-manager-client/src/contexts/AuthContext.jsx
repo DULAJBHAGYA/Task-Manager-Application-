@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import apiService from '../services/api';
+import websocketService from '../services/websocket';
 
 const AuthContext = createContext();
 
@@ -59,10 +60,8 @@ export const AuthProvider = ({ children }) => {
   // Signin function
   const signin = async (credentials) => {
     try {
-      console.log('Signin attempt with:', credentials.email);
       setError(null);
       const response = await apiService.signin(credentials);
-      console.log('Signin response:', response);
       const { user: loggedInUser, token } = response.data;
       
       apiService.setToken(token);
@@ -70,7 +69,6 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true, user: loggedInUser };
     } catch (error) {
-      console.error('Signin error:', error);
       setError(error.message);
       return { success: false, error: error.message };
     }
@@ -86,6 +84,7 @@ export const AuthProvider = ({ children }) => {
       apiService.setToken(null);
       setUser(null);
       setError(null);
+      websocketService.disconnect();
     }
   };
 

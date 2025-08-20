@@ -2,68 +2,40 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import TopBar from '../components/TopBar';
+import { useTasks } from '../contexts/TaskContext';
+import apiService from '../services/api';
 
 const CalendarPage = () => {
   const navigate = useNavigate();
+  const { tasks, loading, error } = useTasks();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState([]);
+  const [calendarTasks, setCalendarTasks] = useState([]);
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [viewMode, setViewMode] = useState('month'); // month, week, day
 
-  // Load events from localStorage on component mount
+  // Load calendar tasks from backend
   useEffect(() => {
-    const savedEvents = localStorage.getItem('calendarEvents');
-    if (savedEvents) {
-      setEvents(JSON.parse(savedEvents));
-    } else {
-      // Initialize with some sample events
-      const sampleEvents = [
-        {
-          id: 1,
-          title: 'Team Meeting',
-          description: 'Weekly team sync meeting',
-          date: new Date().toISOString().split('T')[0],
-          time: '10:00',
-          duration: 60,
-          type: 'meeting',
-          priority: 'Medium',
-          attendees: ['John Doe', 'Jane Smith', 'Mike Johnson']
-        },
-        {
-          id: 2,
-          title: 'Project Deadline',
-          description: 'Website redesign project submission',
-          date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          time: '17:00',
-          duration: 0,
-          type: 'deadline',
-          priority: 'High',
-          attendees: ['Sarah Wilson']
-        },
-        {
-          id: 3,
-          title: 'Client Presentation',
-          description: 'Present new features to client',
-          date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          time: '14:00',
-          duration: 90,
-          type: 'presentation',
-          priority: 'High',
-          attendees: ['Alex Brown', 'David Lee']
-        }
-      ];
-      setEvents(sampleEvents);
-      localStorage.setItem('calendarEvents', JSON.stringify(sampleEvents));
-    }
-  }, []);
+    const loadCalendarTasks = async () => {
+      try {
+        const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+        const endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+        
+        const response = await apiService.getTasksForCalendar({
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString()
+        });
+        
+        setCalendarTasks(response.data.tasks);
+      } catch (error) {
+        console.error('Failed to load calendar tasks:', error);
+      }
+    };
 
-  // Save events to localStorage whenever events change
-  useEffect(() => {
-    localStorage.setItem('calendarEvents', JSON.stringify(events));
-  }, [events]);
+    loadCalendarTasks();
+  }, [currentDate]);
 
   const addEvent = (eventData) => {
     const newEvent = {
@@ -156,7 +128,10 @@ const CalendarPage = () => {
   // Get events for a specific date
   const getEventsForDate = (date) => {
     const dateString = date.toISOString().split('T')[0];
-    return events.filter(event => event.date === dateString);
+    return calendarTasks.filter(task => {
+      const taskDate = new Date(task.dueDate).toISOString().split('T')[0];
+      return taskDate === dateString;
+    });
   };
 
   // Get event type color
@@ -321,9 +296,7 @@ const CalendarPage = () => {
                         }}
                       >
                         <div className="font-medium truncate">{event.title}</div>
-                        {event.time && (
-                          <div className="text-xs opacity-75">{event.time}</div>
-                        )}
+                        <div className="text-xs opacity-75">{event.priority}</div>
                       </div>
                     ))}
                     {dayEvents.length > 3 && (
@@ -372,25 +345,23 @@ const CalendarPage = () => {
                               <p className="text-sm text-gray-600 mt-1">{event.description}</p>
                             )}
                             <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                              {event.time && <span>⏰ {event.time}</span>}
-                              {event.duration > 0 && <span>⏱️ {event.duration} min</span>}
-                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEventTypeColor(event.type)}`}>
-                                {event.type}
+                              <span>📅 {new Date(event.dueDate).toLocaleDateString()}</span>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEventTypeColor('task')}`}>
+                                Task
                               </span>
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(event.priority).replace('border-l-', 'bg-').replace('-500', '-100')} text-gray-800`}>
                                 {event.priority}
                               </span>
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${event.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                                {event.status}
+                              </span>
                             </div>
-                            {event.attendees.length > 0 && (
+                            {event.assignee && (
                               <div className="mt-2">
-                                <span className="text-sm text-gray-500">Attendees: </span>
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                  {event.attendees.map((attendee, index) => (
-                                    <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                      {attendee}
-                                    </span>
-                                  ))}
-                                </div>
+                                <span className="text-sm text-gray-500">Assigned to: </span>
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                                  {event.assignee.firstName} {event.assignee.lastName}
+                                </span>
                               </div>
                             )}
                           </div>

@@ -15,20 +15,16 @@ const DashboardPage = () => {
     createTask, 
     updateTask, 
     deleteTask, 
-    loadTasks 
+    loadTasks,
+    filters,
+    updateFilters
   } = useTasks();
 
   const [showAddTask, setShowAddTask] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('date');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Load tasks from backend on component mount
-  useEffect(() => {
-    loadTasks();
-  }, [loadTasks]);
+  // Tasks are automatically loaded by TaskContext on mount
 
   const addTask = async (taskData) => {
     const result = await createTask(taskData);
@@ -64,25 +60,32 @@ const DashboardPage = () => {
     }
   };
 
-  // Filter and sort tasks
-  const filteredTasks = tasks
-    .filter(task => {
-      const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'date') {
-        return new Date(b.createdAt) - new Date(a.createdAt);
-      } else if (sortBy === 'status') {
-        return a.status.localeCompare(b.status);
-      } else if (sortBy === 'priority') {
-        const priorityOrder = { 'High': 3, 'Medium': 2, 'Low': 1 };
-        return priorityOrder[b.priority] - priorityOrder[a.priority];
-      }
-      return 0;
-    });
+  // Handle filter changes
+  const handleSearchChange = (value) => {
+    updateFilters({ search: value });
+  };
+
+  const handleStatusFilterChange = (value) => {
+    updateFilters({ status: value === 'all' ? '' : value });
+  };
+
+  const handleSortChange = (value) => {
+    let sortBy = 'createdAt';
+    let sortOrder = 'DESC';
+    
+    if (value === 'status') {
+      sortBy = 'status';
+      sortOrder = 'ASC';
+    } else if (value === 'priority') {
+      sortBy = 'priority';
+      sortOrder = 'DESC';
+    }
+    
+    updateFilters({ sortBy, sortOrder });
+  };
+
+  // Use tasks directly from context (they're already filtered by the backend)
+  const filteredTasks = tasks;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -129,12 +132,12 @@ const DashboardPage = () => {
 
         {/* Filters and Search */}
         <FiltersAndSearch 
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
+          searchTerm={filters.search}
+          setSearchTerm={handleSearchChange}
+          statusFilter={filters.status || 'all'}
+          setStatusFilter={handleStatusFilterChange}
+          sortBy={filters.sortBy === 'createdAt' ? 'date' : filters.sortBy}
+          setSortBy={handleSortChange}
         />
 
         {/* Task List */}
