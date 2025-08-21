@@ -227,21 +227,16 @@ docker-compose -f docker-compose.yml up --build
 
 ## Future Enhancements
 
-### Short Term (Next Sprint)
 - [ ] **Real-time Notifications** - WebSocket integration for live updates
 - [ ] **File Attachments** - Upload and manage files for tasks/projects
 - [ ] **Email Notifications** - Automated email reminders
 - [ ] **Advanced Search** - Full-text search with filters
 - [ ] **Data Export** - CSV/PDF export functionality
-
-### Medium Term (Next Quarter)
 - [ ] **Team Collaboration** - Multi-user project management
 - [ ] **Time Tracking** - Built-in time tracking for tasks
 - [ ] **Mobile App** - React Native mobile application
 - [ ] **API Documentation** - Swagger/OpenAPI documentation
 - [ ] **Performance Optimization** - Caching and query optimization
-
-### Long Term (Next Year)
 - [ ] **AI Integration** - Smart task suggestions and automation
 - [ ] **Advanced Analytics** - Machine learning insights
 - [ ] **Third-party Integrations** - Slack, GitHub, Jira connectors
