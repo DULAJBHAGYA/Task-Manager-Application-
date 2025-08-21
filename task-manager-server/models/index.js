@@ -5,6 +5,7 @@ const User = require('./User')(sequelize);
 const Task = require('./Task')(sequelize);
 const Project = require('./Project')(sequelize);
 const Event = require('./Event')(sequelize);
+const ProjectMember = require('./ProjectMember')(sequelize);
 
 // Define associations
 // User associations
@@ -24,6 +25,14 @@ Project.belongsTo(User, { as: 'owner', foreignKey: 'ownerId' });
 Project.belongsTo(User, { as: 'manager', foreignKey: 'managerId' });
 Project.hasMany(Task, { as: 'tasks', foreignKey: 'projectId' });
 Project.hasMany(Event, { as: 'events', foreignKey: 'projectId' });
+Project.hasMany(ProjectMember, { as: 'members', foreignKey: 'projectId' });
+
+// ProjectMember associations
+ProjectMember.belongsTo(User, { as: 'user', foreignKey: 'userId' });
+ProjectMember.belongsTo(Project, { as: 'project', foreignKey: 'projectId' });
+
+// User associations for project members
+User.hasMany(ProjectMember, { as: 'projectMemberships', foreignKey: 'userId' });
 
 // Event associations
 Event.belongsTo(User, { as: 'creator', foreignKey: 'creatorId' });
@@ -34,5 +43,6 @@ module.exports = {
   User,
   Task,
   Project,
-  Event
+  Event,
+  ProjectMember
 }; 

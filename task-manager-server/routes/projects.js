@@ -1,27 +1,46 @@
 const express = require('express');
 const router = express.Router();
+const { auth } = require('../middleware/auth');
+const {
+  getAllProjects,
+  getProjectById,
+  createProject,
+  updateProject,
+  deleteProject,
+  searchUsers,
+  addProjectMember,
+  removeProjectMember,
+  getProjectStats
+} = require('../controllers/projectController');
 
-// Basic project routes structure
-// Implementation details can be added later
+// All routes require authentication
+router.use(auth);
 
-router.get('/', (req, res) => {
-  res.json({ message: 'Get projects route - implementation needed' });
-});
+// Get all projects for the authenticated user
+router.get('/', getAllProjects);
 
-router.post('/', (req, res) => {
-  res.json({ message: 'Create project route - implementation needed' });
-});
+// Get project statistics
+router.get('/stats', getProjectStats);
 
-router.get('/:id', (req, res) => {
-  res.json({ message: 'Get project by ID route - implementation needed' });
-});
+// Get a single project by ID
+router.get('/:id', getProjectById);
 
-router.put('/:id', (req, res) => {
-  res.json({ message: 'Update project route - implementation needed' });
-});
+// Create a new project
+router.post('/', createProject);
 
-router.delete('/:id', (req, res) => {
-  res.json({ message: 'Delete project route - implementation needed' });
-});
+// Update a project
+router.put('/:id', updateProject);
+
+// Delete a project
+router.delete('/:id', deleteProject);
+
+// Search users to add to project
+router.get('/:projectId/search-users', searchUsers);
+
+// Add member to project
+router.post('/:projectId/members', addProjectMember);
+
+// Remove member from project
+router.delete('/:projectId/members/:userId', removeProjectMember);
 
 module.exports = router; 

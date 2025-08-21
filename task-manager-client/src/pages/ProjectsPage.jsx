@@ -2,124 +2,125 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import TopBar from '../components/TopBar';
+import { useProjects } from '../contexts/ProjectContext';
+import apiService from '../services/api';
+import Modal from '../components/Modal';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const ProjectsPage = () => {
   const navigate = useNavigate();
-  const [projects, setProjects] = useState([]);
+  const { 
+    projects, 
+    loading, 
+    error, 
+    createProject, 
+    updateProject, 
+    deleteProject,
+    filters,
+    updateFilters
+  } = useProjects();
   const [showAddProject, setShowAddProject] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info' });
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
 
-  // Load projects from localStorage on component mount
-  useEffect(() => {
-    const savedProjects = localStorage.getItem('projects');
-    if (savedProjects) {
-      setProjects(JSON.parse(savedProjects));
+  // Handle filter changes
+  const handleSearchChange = (value) => {
+    updateFilters({ search: value });
+  };
+
+  const handleStatusFilterChange = (value) => {
+    updateFilters({ status: value === 'all' ? '' : value });
+  };
+
+  const addProject = async (projectData) => {
+    const result = await createProject(projectData);
+    if (result.success) {
+      setShowAddProject(false);
+      setModal({
+        isOpen: true,
+        title: 'Success!',
+        message: 'Project created successfully.',
+        type: 'success'
+      });
     } else {
-      // Initialize with some sample projects
-      const sampleProjects = [
-        {
-          id: 1,
-          name: 'Website Redesign',
-          description: 'Complete overhaul of company website with modern design and improved UX',
-          status: 'In Progress',
-          priority: 'High',
-          startDate: '2024-01-15',
-          endDate: '2024-03-30',
-          progress: 65,
-          teamMembers: ['John Doe', 'Jane Smith', 'Mike Johnson'],
-          tasks: 12,
-          completedTasks: 8
-        },
-        {
-          id: 2,
-          name: 'Mobile App Development',
-          description: 'iOS and Android app for customer engagement and support',
-          status: 'Planning',
-          priority: 'Medium',
-          startDate: '2024-02-01',
-          endDate: '2024-06-30',
-          progress: 15,
-          teamMembers: ['Sarah Wilson', 'Alex Brown'],
-          tasks: 8,
-          completedTasks: 1
-        },
-        {
-          id: 3,
-          name: 'Database Migration',
-          description: 'Migrate from legacy system to cloud-based solution',
-          status: 'Completed',
-          priority: 'Low',
-          startDate: '2023-11-01',
-          endDate: '2024-01-31',
-          progress: 100,
-          teamMembers: ['David Lee', 'Emily Chen'],
-          tasks: 6,
-          completedTasks: 6
+      setModal({
+        isOpen: true,
+        title: 'Error',
+        message: `Failed to create project: ${result.error}`,
+        type: 'error'
+      });
+    }
+  };
+
+  const updateProjectHandler = async (projectId, updatedData) => {
+    const result = await updateProject(projectId, updatedData);
+    if (result.success) {
+      setEditingProject(null);
+      setModal({
+        isOpen: true,
+        title: 'Success!',
+        message: 'Project updated successfully.',
+        type: 'success'
+      });
+    } else {
+      setModal({
+        isOpen: true,
+        title: 'Error',
+        message: `Failed to update project: ${result.error}`,
+        type: 'error'
+      });
+    }
+  };
+
+  const deleteProjectHandler = (projectId) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Project',
+      message: 'Are you sure you want to delete this project? This action cannot be undone.',
+      onConfirm: async () => {
+        const result = await deleteProject(projectId);
+        if (result.success) {
+          setModal({
+            isOpen: true,
+            title: 'Success!',
+            message: 'Project deleted successfully.',
+            type: 'success'
+          });
+        } else {
+          setModal({
+            isOpen: true,
+            title: 'Error',
+            message: `Failed to delete project: ${result.error}`,
+            type: 'error'
+          });
         }
-      ];
-      setProjects(sampleProjects);
-      localStorage.setItem('projects', JSON.stringify(sampleProjects));
-    }
-  }, []);
-
-  // Save projects to localStorage whenever projects change
-  useEffect(() => {
-    localStorage.setItem('projects', JSON.stringify(projects));
-  }, [projects]);
-
-  const addProject = (projectData) => {
-    const newProject = {
-      id: Date.now(),
-      name: projectData.name,
-      description: projectData.description || '',
-      status: projectData.status || 'Planning',
-      priority: projectData.priority || 'Medium',
-      startDate: projectData.startDate || new Date().toISOString().split('T')[0],
-      endDate: projectData.endDate || '',
-      progress: 0,
-      teamMembers: projectData.teamMembers || [],
-      tasks: 0,
-      completedTasks: 0
-    };
-    setProjects([...projects, newProject]);
-    setShowAddProject(false);
-  };
-
-  const updateProject = (projectId, updatedData) => {
-    setProjects(projects.map(project => 
-      project.id === projectId ? { ...project, ...updatedData } : project
-    ));
-    setEditingProject(null);
-  };
-
-  const deleteProject = (projectId) => {
-    if (window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
-      setProjects(projects.filter(project => project.id !== projectId));
-    }
-  };
-
-  const changeProjectStatus = (projectId, newStatus) => {
-    setProjects(projects.map(project => 
-      project.id === projectId ? { ...project, status: newStatus } : project
-    ));
-  };
-
-  // Filter and sort projects
-  const filteredProjects = projects
-    .filter(project => {
-      const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           project.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    })
-    .sort((a, b) => {
-      if (a.status === 'Completed' && b.status !== 'Completed') return 1;
-      if (b.status === 'Completed' && a.status !== 'Completed') return -1;
-      return new Date(b.startDate) - new Date(a.startDate);
+      }
     });
+  };
+
+  const changeProjectStatus = async (projectId, newStatus) => {
+    const result = await updateProject(projectId, { status: newStatus });
+    if (result.success) {
+      setModal({
+        isOpen: true,
+        title: 'Success!',
+        message: `Project status updated to ${newStatus}.`,
+        type: 'success'
+      });
+    } else {
+      setModal({
+        isOpen: true,
+        title: 'Error',
+        message: `Failed to update project status: ${result.error}`,
+        type: 'error'
+      });
+    }
+  };
+
+  // Use projects directly from context (they're already filtered by the backend)
+  const filteredProjects = projects;
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -178,8 +179,8 @@ const ProjectsPage = () => {
                 <input
                   type="text"
                   placeholder="Search projects..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  value={filters.search}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
@@ -188,8 +189,8 @@ const ProjectsPage = () => {
             {/* Status Filter */}
             <div className="sm:w-48">
               <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                value={filters.status || 'all'}
+                onChange={(e) => handleStatusFilterChange(e.target.value)}
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="all">All Status</option>
@@ -211,12 +212,12 @@ const ProjectsPage = () => {
               </svg>
               <h3 className="mt-2 text-sm font-medium text-gray-900">No projects found</h3>
               <p className="mt-1 text-sm text-gray-500">
-                {searchTerm || statusFilter !== 'all' 
+                {filters.search || filters.status !== '' 
                   ? 'Try adjusting your search or filter criteria.'
                   : 'Get started by creating a new project.'
                 }
               </p>
-              {!searchTerm && statusFilter === 'all' && (
+              {!filters.search && filters.status === '' && (
                 <div className="mt-6">
                   <button
                     onClick={() => setShowAddProject(true)}
@@ -258,7 +259,7 @@ const ProjectsPage = () => {
                           </svg>
                         </button>
                         <button
-                          onClick={() => deleteProject(project.id)}
+                          onClick={() => deleteProjectHandler(project.id)}
                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -300,18 +301,18 @@ const ProjectsPage = () => {
                     </div>
 
                     {/* Team Members */}
-                    {project.teamMembers.length > 0 && (
+                    {project.members && project.members.length > 0 && (
                       <div className="mb-4">
                         <span className="text-sm text-gray-500">Team:</span>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {project.teamMembers.slice(0, 3).map((member, index) => (
+                          {project.members.slice(0, 3).map((member, index) => (
                             <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                              {member}
+                              {member.user ? `${member.user.firstName} ${member.user.lastName}` : member.role}
                             </span>
                           ))}
-                          {project.teamMembers.length > 3 && (
+                          {project.members.length > 3 && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                              +{project.teamMembers.length - 3}
+                              +{project.members.length - 3}
                             </span>
                           )}
                         </div>
@@ -320,9 +321,9 @@ const ProjectsPage = () => {
 
                     {/* Task Summary */}
                     <div className="flex items-center justify-between text-sm text-gray-600">
-                      <span>Tasks: {project.completedTasks}/{project.tasks}</span>
+                      <span>Tasks: {project.taskStats ? project.taskStats.completed : 0}/{project.taskStats ? project.taskStats.total : 0}</span>
                       <span className="text-indigo-600 font-medium">
-                        {project.tasks > 0 ? Math.round((project.completedTasks / project.tasks) * 100) : 0}% Complete
+                        {project.taskStats && project.taskStats.total > 0 ? Math.round((project.taskStats.completed / project.taskStats.total) * 100) : 0}% Complete
                       </span>
                     </div>
 
@@ -382,12 +383,29 @@ const ProjectsPage = () => {
             </div>
             <EditProjectForm 
               project={editingProject} 
-              onSubmit={updateProject} 
+              onSubmit={updateProjectHandler} 
               onCancel={() => setEditingProject(null)} 
             />
           </div>
         </div>
       )}
+
+      {/* Modals */}
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={() => setModal({ ...modal, isOpen: false })}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+      />
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+      />
     </div>
   );
 };
@@ -400,11 +418,8 @@ const AddProjectForm = ({ onSubmit, onCancel }) => {
     status: 'Planning',
     priority: 'Medium',
     startDate: new Date().toISOString().split('T')[0],
-    endDate: '',
-    teamMembers: []
+    endDate: ''
   });
-
-  const [newMember, setNewMember] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -569,11 +584,8 @@ const EditProjectForm = ({ project, onSubmit, onCancel }) => {
     status: project.status,
     priority: project.priority,
     startDate: project.startDate,
-    endDate: project.endDate,
-    teamMembers: [...project.teamMembers]
+    endDate: project.endDate
   });
-
-  const [newMember, setNewMember] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();

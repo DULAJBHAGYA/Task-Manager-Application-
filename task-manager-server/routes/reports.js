@@ -1,23 +1,22 @@
 const express = require('express');
 const router = express.Router();
+const { auth } = require('../middleware/auth');
+const {
+  getDashboardAnalytics,
+  getTaskAnalytics,
+  getProjectAnalytics
+} = require('../controllers/reportsController');
 
-// Basic reports routes structure
-// Implementation details can be added later
+// All routes require authentication
+router.use(auth);
 
-router.get('/dashboard', (req, res) => {
-  res.json({ message: 'Get dashboard reports route - implementation needed' });
-});
+// Get comprehensive dashboard analytics
+router.get('/dashboard', getDashboardAnalytics);
 
-router.get('/tasks', (req, res) => {
-  res.json({ message: 'Get task reports route - implementation needed' });
-});
+// Get task analytics
+router.get('/tasks', getTaskAnalytics);
 
-router.get('/projects', (req, res) => {
-  res.json({ message: 'Get project reports route - implementation needed' });
-});
-
-router.get('/analytics', (req, res) => {
-  res.json({ message: 'Get analytics route - implementation needed' });
-});
+// Get project analytics
+router.get('/projects', getProjectAnalytics);
 
 module.exports = router; 

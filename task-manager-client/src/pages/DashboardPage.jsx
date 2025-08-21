@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import TopBar from '../components/TopBar';
 import FiltersAndSearch from '../components/FiltersAndSearch';
@@ -6,6 +7,8 @@ import TaskList from '../components/TaskList';
 import AddTaskForm from '../components/AddTaskForm';
 import EditTaskForm from '../components/EditTaskForm';
 import { useTasks } from '../contexts/TaskContext';
+import Modal from '../components/Modal';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const DashboardPage = () => {
   const { 
@@ -15,27 +18,36 @@ const DashboardPage = () => {
     createTask, 
     updateTask, 
     deleteTask, 
-    loadTasks 
+    loadTasks,
+    filters,
+    updateFilters
   } = useTasks();
 
   const [showAddTask, setShowAddTask] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('date');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info' });
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
 
-  // Load tasks from backend on component mount
-  useEffect(() => {
-    loadTasks();
-  }, [loadTasks]);
+  // Tasks are automatically loaded by TaskContext on mount
 
   const addTask = async (taskData) => {
     const result = await createTask(taskData);
     if (result.success) {
       setShowAddTask(false);
+      setModal({
+        isOpen: true,
+        title: 'Success!',
+        message: 'Task created successfully.',
+        type: 'success'
+      });
     } else {
-      alert('Failed to create task: ' + result.error);
+      setModal({
+        isOpen: true,
+        title: 'Error',
+        message: `Failed to create task: ${result.error}`,
+        type: 'error'
+      });
     }
   };
 
@@ -43,18 +55,46 @@ const DashboardPage = () => {
     const result = await updateTask(taskId, updatedData);
     if (result.success) {
       setEditingTask(null);
+      setModal({
+        isOpen: true,
+        title: 'Success!',
+        message: 'Task updated successfully.',
+        type: 'success'
+      });
     } else {
-      alert('Failed to update task: ' + result.error);
+      setModal({
+        isOpen: true,
+        title: 'Error',
+        message: `Failed to update task: ${result.error}`,
+        type: 'error'
+      });
     }
   };
 
-  const deleteTaskHandler = async (taskId) => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      const result = await deleteTask(taskId);
-      if (!result.success) {
-        alert('Failed to delete task: ' + result.error);
+  const deleteTaskHandler = (taskId) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Task',
+      message: 'Are you sure you want to delete this task? This action cannot be undone.',
+      onConfirm: async () => {
+        const result = await deleteTask(taskId);
+        if (result.success) {
+          setModal({
+            isOpen: true,
+            title: 'Success!',
+            message: 'Task deleted successfully.',
+            type: 'success'
+          });
+        } else {
+          setModal({
+            isOpen: true,
+            title: 'Error',
+            message: `Failed to delete task: ${result.error}`,
+            type: 'error'
+          });
+        }
       }
-    }
+    });
   };
 
   const changeTaskStatus = async (taskId, newStatus) => {
@@ -64,25 +104,32 @@ const DashboardPage = () => {
     }
   };
 
-  // Filter and sort tasks
-  const filteredTasks = tasks
-    .filter(task => {
-      const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           (task.description && task.description.toLowerCase().includes(searchTerm.toLowerCase()));
-      const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'date') {
-        return new Date(b.createdAt) - new Date(a.createdAt);
-      } else if (sortBy === 'status') {
-        return a.status.localeCompare(b.status);
-      } else if (sortBy === 'priority') {
-        const priorityOrder = { 'High': 3, 'Medium': 2, 'Low': 1 };
-        return priorityOrder[b.priority] - priorityOrder[a.priority];
-      }
-      return 0;
-    });
+  // Handle filter changes
+  const handleSearchChange = (value) => {
+    updateFilters({ search: value });
+  };
+
+  const handleStatusFilterChange = (value) => {
+    updateFilters({ status: value === 'all' ? '' : value });
+  };
+
+  const handleSortChange = (value) => {
+    let sortBy = 'createdAt';
+    let sortOrder = 'DESC';
+    
+    if (value === 'status') {
+      sortBy = 'status';
+      sortOrder = 'ASC';
+    } else if (value === 'priority') {
+      sortBy = 'priority';
+      sortOrder = 'DESC';
+    }
+    
+    updateFilters({ sortBy, sortOrder });
+  };
+
+  // Use tasks directly from context (they're already filtered by the backend)
+  const filteredTasks = tasks;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -129,12 +176,12 @@ const DashboardPage = () => {
 
         {/* Filters and Search */}
         <FiltersAndSearch 
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          statusFilter={statusFilter}
-          setStatusFilter={setStatusFilter}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
+          searchTerm={filters.search}
+          setSearchTerm={handleSearchChange}
+          statusFilter={filters.status || 'all'}
+          setStatusFilter={handleStatusFilterChange}
+          sortBy={filters.sortBy === 'createdAt' ? 'date' : filters.sortBy}
+          setSortBy={handleSortChange}
         />
 
         {/* Task List */}
@@ -175,6 +222,23 @@ const DashboardPage = () => {
           </div>
         </div>
       )}
+
+      {/* Modals */}
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={() => setModal({ ...modal, isOpen: false })}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+      />
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+      />
     </div>
   );
 };

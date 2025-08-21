@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import apiService from '../services/api';
+import websocketService from '../services/websocket';
 
 const TaskContext = createContext();
 
@@ -30,28 +31,55 @@ export const TaskProvider = ({ children }) => {
     itemsPerPage: 10
   });
 
+  // Refs to prevent multiple simultaneous requests
+  const loadingRef = useRef(false);
+  const debounceTimerRef = useRef(null);
+  const lastRequestTimeRef = useRef(0);
+
   // Load tasks with current filters
   const loadTasks = async (page = 1) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const params = {
-        page,
-        limit: pagination.itemsPerPage,
-        ...filters
-      };
-
-      const response = await apiService.getAllTasks(params);
-      
-      setTasks(response.data.tasks);
-      setPagination(response.data.pagination);
-    } catch (error) {
-      setError(error.message);
-      console.error('Failed to load tasks:', error);
-    } finally {
-      setLoading(false);
+    // Prevent multiple simultaneous requests
+    if (loadingRef.current) {
+      return;
     }
+
+    // Rate limiting: prevent requests more frequently than every 2 seconds
+    const now = Date.now();
+    if (now - lastRequestTimeRef.current < 2000) {
+      return;
+    }
+
+    // Clear any existing debounce timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Debounce the request
+    debounceTimerRef.current = setTimeout(async () => {
+      loadingRef.current = true;
+      lastRequestTimeRef.current = Date.now();
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const params = {
+          page,
+          limit: pagination.itemsPerPage,
+          ...filters
+        };
+
+        const response = await apiService.getAllTasks(params);
+        
+        setTasks(response.data.tasks);
+        setPagination(response.data.pagination);
+      } catch (error) {
+        setError(error.message);
+        console.error('Failed to load tasks:', error);
+      } finally {
+        setLoading(false);
+        loadingRef.current = false;
+      }
+    }, 300); // 300ms debounce
   };
 
   // Load task statistics
@@ -179,12 +207,49 @@ export const TaskProvider = ({ children }) => {
   useEffect(() => {
     loadTasks();
     loadStats();
+    
+            // TODO: Enable WebSocket for real-time updates when backend supports it
+        // const token = localStorage.getItem('token');
+        // if (token) {
+        //   websocketService.connect(token);
+        //   
+        //   // Subscribe to real-time updates
+        //   const unsubscribeTaskUpdate = websocketService.subscribe('TASK_UPDATED', (task) => {
+        //     setTasks(prevTasks => 
+        //       prevTasks.map(t => t.id === task.id ? task : t)
+        //     );
+        //   });
+        //   
+        //   const unsubscribeTaskCreated = websocketService.subscribe('TASK_CREATED', (task) => {
+        //     setTasks(prevTasks => [task, ...prevTasks]);
+        //   });
+        //   
+        //   const unsubscribeTaskDeleted = websocketService.subscribe('TASK_DELETED', (taskId) => {
+        //     setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
+        //   });
+        //   
+        //   // Cleanup subscriptions on unmount
+        //   return () => {
+        //     unsubscribeTaskUpdate();
+        //     unsubscribeTaskCreated();
+        //     unsubscribeTaskDeleted();
+        //   };
+        // }
   }, []);
 
   // Reload tasks when filters change
   useEffect(() => {
     loadTasks(pagination.currentPage);
-  }, [filters, pagination.currentPage]);
+  }, [filters.status, filters.priority, filters.search, filters.sortBy, filters.sortOrder, pagination.currentPage]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
   const value = {
     // State
