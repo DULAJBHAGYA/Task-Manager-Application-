@@ -95,6 +95,23 @@ class ApiService {
     });
   }
 
+  async deleteUserProfile() {
+    return this.request('/users/profile', {
+      method: 'DELETE',
+    });
+  }
+
+  async getUserSettings() {
+    return this.request('/users/settings');
+  }
+
+  async updateUserSettings(settingsData) {
+    return this.request('/users/settings', {
+      method: 'PUT',
+      body: JSON.stringify(settingsData),
+    });
+  }
+
   // Task methods
   async getAllTasks(params = {}) {
     const queryString = new URLSearchParams(params).toString();

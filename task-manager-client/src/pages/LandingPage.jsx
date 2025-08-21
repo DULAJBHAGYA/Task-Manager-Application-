@@ -53,21 +53,6 @@ const LandingPage = () => {
                   Streamline your productivity with our intuitive task management application. 
                   Stay organized, meet deadlines, and achieve your goals with ease.
                 </p>
-                <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
-                  <div className="rounded-md shadow">
-                    <button 
-                      onClick={() => navigate('/auth')}
-                      className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10 transition-colors"
-                    >
-                      Get Started
-                    </button>
-                  </div>
-                  <div className="mt-3 sm:mt-0 sm:ml-3">
-                    <a href="#learn-more" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 md:py-4 md:text-lg md:px-10 transition-colors">
-                      Learn More
-                    </a>
-                  </div>
-                </div>
               </div>
             </main>
           </div>
@@ -152,7 +137,7 @@ const LandingPage = () => {
             Join thousands of users who have already transformed their productivity.
           </p>
           <button 
-            onClick={() => navigate('/auth')}
+            onClick={() => navigate('/auth?mode=signup')}
             className="mt-8 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50 sm:w-auto transition-colors"
           >
             Sign up for free
@@ -177,30 +162,21 @@ const LandingPage = () => {
                 Making task management simple and effective for everyone.
               </p>
             </div>
-            <div className="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">
-              <div className="md:grid md:grid-cols-2 md:gap-x-8">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Product</h3>
-                  <ul className="mt-4 space-y-4">
-                    <li><a href="#" className="text-base text-gray-300 hover:text-white transition-colors">Features</a></li>
-                    <li><a href="#" className="text-base text-gray-300 hover:text-white transition-colors">Pricing</a></li>
-                    <li><a href="#" className="text-base text-gray-300 hover:text-white transition-colors">API</a></li>
-                  </ul>
-                </div>
-                <div className="mt-12 md:mt-0">
-                  <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Support</h3>
-                  <ul className="mt-4 space-y-4">
-                    <li><a href="#" className="text-base text-gray-300 hover:text-white transition-colors">Help Center</a></li>
-                    <li><a href="#" className="text-base text-gray-300 hover:text-white transition-colors">Contact</a></li>
-                    <li><a href="#" className="text-base text-gray-300 hover:text-white transition-colors">Status</a></li>
-                  </ul>
-                </div>
+            <div className="mt-12 xl:mt-0 xl:col-span-2">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-white mb-4">Transform Your Productivity</h3>
+                <p className="text-gray-400 text-base leading-relaxed">
+                  Join thousands of users who have revolutionized their workflow with TaskMate. 
+                  From simple to-do lists to complex project management, we provide the tools you need 
+                  to stay organized, meet deadlines, and achieve your goals. Start your journey towards 
+                  better productivity today and experience the difference that proper task management can make.
+                </p>
               </div>
             </div>
           </div>
           <div className="mt-12 border-t border-gray-700 pt-8">
             <p className="text-base text-gray-400 xl:text-center">
-              &copy; 2024 TaskMate. All rights reserved.
+              Built with passion for productivity. Empowering individuals and teams to achieve more every day.
             </p>
           </div>
         </div>

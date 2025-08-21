@@ -7,6 +7,7 @@ import TaskList from '../components/TaskList';
 import AddTaskForm from '../components/AddTaskForm';
 import EditTaskForm from '../components/EditTaskForm';
 import { useTasks } from '../contexts/TaskContext';
+import { useAuth } from '../contexts/AuthContext';
 import Modal from '../components/Modal';
 import ConfirmationModal from '../components/ConfirmationModal';
 
@@ -28,6 +29,9 @@ const DashboardPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info' });
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
+  const [logoutConfirmModal, setLogoutConfirmModal] = useState({ isOpen: false });
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   // Tasks are automatically loaded by TaskContext on mount
 
@@ -97,6 +101,18 @@ const DashboardPage = () => {
     });
   };
 
+  const handleLogoutClick = () => {
+    setLogoutConfirmModal({
+      isOpen: true,
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out?',
+      onConfirm: async () => {
+        await logout();
+        navigate('/');
+      }
+    });
+  };
+
   const changeTaskStatus = async (taskId, newStatus) => {
     const result = await updateTask(taskId, { status: newStatus });
     if (!result.success) {
@@ -132,7 +148,7 @@ const DashboardPage = () => {
   const filteredTasks = tasks;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div 
@@ -142,7 +158,7 @@ const DashboardPage = () => {
       )}
 
       {/* Sidebar */}
-      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} onLogoutClick={handleLogoutClick} />
 
       {/* Main Content */}
       <div className="lg:pl-64">
@@ -151,12 +167,12 @@ const DashboardPage = () => {
 
         {/* Error Display */}
         {error && (
-          <div className="mx-4 sm:mx-6 lg:mx-8 mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">
+          <div className="mx-4 sm:mx-6 lg:mx-8 mt-4 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-600 text-red-700 dark:text-red-400 rounded-md">
             <div className="flex justify-between items-center">
               <span>{error}</span>
               <button 
                 onClick={() => window.location.reload()}
-                className="text-red-500 hover:text-red-700"
+                className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
               >
                 ×
               </button>
@@ -166,9 +182,9 @@ const DashboardPage = () => {
 
         {/* Loading State */}
         {loading && (
-          <div className="mx-4 sm:mx-6 lg:mx-8 mt-4 p-4 bg-blue-100 border border-blue-400 text-blue-700 rounded-md">
+          <div className="mx-4 sm:mx-6 lg:mx-8 mt-4 p-4 bg-blue-100 dark:bg-blue-900/20 border border-blue-400 dark:border-blue-600 text-blue-700 dark:text-blue-400 rounded-md">
             <div className="flex items-center">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 dark:border-blue-400 mr-2"></div>
               Loading tasks...
             </div>
           </div>
@@ -198,9 +214,9 @@ const DashboardPage = () => {
       {/* Add Task Modal */}
       {showAddTask && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Add New Task</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Add New Task</h3>
             </div>
             <AddTaskForm onSubmit={addTask} onCancel={() => setShowAddTask(false)} />
           </div>
@@ -210,9 +226,9 @@ const DashboardPage = () => {
       {/* Edit Task Modal */}
       {editingTask && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Edit Task</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Edit Task</h3>
             </div>
             <EditTaskForm 
               task={editingTask} 
@@ -238,6 +254,18 @@ const DashboardPage = () => {
         onConfirm={confirmModal.onConfirm}
         title={confirmModal.title}
         message={confirmModal.message}
+      />
+
+      <ConfirmationModal
+        isOpen={logoutConfirmModal.isOpen}
+        onClose={() => setLogoutConfirmModal({ ...logoutConfirmModal, isOpen: false })}
+        onConfirm={logoutConfirmModal.onConfirm}
+        title={logoutConfirmModal.title}
+        message={logoutConfirmModal.message}
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        confirmButtonClass="bg-red-600 hover:bg-red-700"
+        icon="warning"
       />
     </div>
   );

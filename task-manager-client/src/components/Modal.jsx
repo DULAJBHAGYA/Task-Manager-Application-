@@ -13,7 +13,7 @@ const Modal = ({ isOpen, onClose, title, message, type = 'info' }) => {
   };
 
   const getContentStyles = () => {
-    const baseStyles = "bg-white rounded-lg shadow-xl max-w-md w-full mx-4 transform transition-all";
+    const baseStyles = "bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 transform transition-all";
     return baseStyles;
   };
 
@@ -21,13 +21,13 @@ const Modal = ({ isOpen, onClose, title, message, type = 'info' }) => {
     const baseStyles = "w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4";
     switch (type) {
       case 'success':
-        return `${baseStyles} bg-green-100 text-green-600`;
+        return `${baseStyles} bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400`;
       case 'error':
-        return `${baseStyles} bg-red-100 text-red-600`;
+        return `${baseStyles} bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400`;
       case 'warning':
-        return `${baseStyles} bg-yellow-100 text-yellow-600`;
+        return `${baseStyles} bg-yellow-100 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400`;
       default:
-        return `${baseStyles} bg-blue-100 text-blue-600`;
+        return `${baseStyles} bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400`;
     }
   };
 
@@ -35,13 +35,13 @@ const Modal = ({ isOpen, onClose, title, message, type = 'info' }) => {
     const baseStyles = "text-lg font-semibold text-center mb-2";
     switch (type) {
       case 'success':
-        return `${baseStyles} text-green-800`;
+        return `${baseStyles} text-green-800 dark:text-green-400`;
       case 'error':
-        return `${baseStyles} text-red-800`;
+        return `${baseStyles} text-red-800 dark:text-red-400`;
       case 'warning':
-        return `${baseStyles} text-yellow-800`;
+        return `${baseStyles} text-yellow-800 dark:text-yellow-400`;
       default:
-        return `${baseStyles} text-gray-800`;
+        return `${baseStyles} text-gray-800 dark:text-white`;
     }
   };
 
@@ -101,7 +101,7 @@ const Modal = ({ isOpen, onClose, title, message, type = 'info' }) => {
             {title}
           </h3>
           
-          <p className="text-gray-600 text-center mb-6">
+          <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
             {message}
           </p>
           

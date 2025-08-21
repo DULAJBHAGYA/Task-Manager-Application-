@@ -101,6 +101,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Update user settings
+  const updateSettings = async (settingsData) => {
+    try {
+      setError(null);
+      const response = await apiService.updateUserSettings(settingsData);
+      // Refresh user data to get updated settings
+      const userResponse = await apiService.getCurrentUser();
+      setUser(userResponse.data.user);
+      return { success: true, user: userResponse.data.user };
+    } catch (error) {
+      setError(error.message);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Update user data (for internal use)
+  const updateUser = (newUserData) => {
+    setUser(newUserData);
+  };
+
   // Clear error
   const clearError = () => {
     setError(null);
@@ -114,6 +134,8 @@ export const AuthProvider = ({ children }) => {
     signin,
     logout,
     updateProfile,
+    updateSettings,
+    updateUser,
     clearError,
     isAuthenticated: !!user,
   };

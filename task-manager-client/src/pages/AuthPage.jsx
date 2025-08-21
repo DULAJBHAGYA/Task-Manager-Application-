@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Modal from '../components/Modal';
 import PasswordInput from '../components/PasswordInput';
@@ -7,8 +7,9 @@ import { validatePassword } from '../utils/passwordValidation';
 
 const AuthPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { signup, signin, error, clearError, isAuthenticated } = useAuth();
-  const [isLogin, setIsLogin] = useState(true);
+  const [isLogin, setIsLogin] = useState(searchParams.get('mode') !== 'signup');
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info' });
   const [passwordValidation, setPasswordValidation] = useState({ isValid: false, errors: [] });
@@ -160,43 +161,6 @@ const AuthPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Navigation */}
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <button 
-                onClick={() => navigate('/')}
-                className="flex items-center space-x-3 text-2xl font-bold text-indigo-600 hover:text-indigo-700 transition-colors"
-              >
-                <img 
-                  src="/images/logo.png" 
-                  alt="TaskMate Logo" 
-                  className="w-8 h-8 object-contain"
-                />
-                TaskMate
-              </button>
-            </div>
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                <button 
-                  onClick={() => navigate('/')}
-                  className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                >
-                  Home
-                </button>
-                <a href="#features" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  Features
-                </a>
-                <a href="#about" className="text-gray-700 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                  About
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Main Content */}
       <div className="flex min-h-screen">
         {/* Left Side - Text Content */}
