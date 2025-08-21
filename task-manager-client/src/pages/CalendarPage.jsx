@@ -416,7 +416,7 @@ const CalendarPage = () => {
                               <p className="text-sm text-gray-600 mt-1">{event.description}</p>
                             )}
                             <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                              <span>📅 {new Date(event.dueDate).toLocaleDateString()}</span>
+                              <span>{new Date(event.dueDate).toLocaleDateString()}</span>
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${getEventTypeColor('task')}`}>
                                 Task
                               </span>
