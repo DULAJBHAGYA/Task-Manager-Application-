@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import TopBar from '../components/TopBar';
 import { useProjects } from '../contexts/ProjectContext';
+import apiService from '../services/api';
+import Modal from '../components/Modal';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const ProjectsPage = () => {
   const navigate = useNavigate();
@@ -19,6 +22,8 @@ const ProjectsPage = () => {
   const [showAddProject, setShowAddProject] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info' });
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
 
   // Handle filter changes
   const handleSearchChange = (value) => {
@@ -33,8 +38,19 @@ const ProjectsPage = () => {
     const result = await createProject(projectData);
     if (result.success) {
       setShowAddProject(false);
+      setModal({
+        isOpen: true,
+        title: 'Success!',
+        message: 'Project created successfully.',
+        type: 'success'
+      });
     } else {
-      alert('Failed to create project: ' + result.error);
+      setModal({
+        isOpen: true,
+        title: 'Error',
+        message: `Failed to create project: ${result.error}`,
+        type: 'error'
+      });
     }
   };
 
@@ -42,24 +58,65 @@ const ProjectsPage = () => {
     const result = await updateProject(projectId, updatedData);
     if (result.success) {
       setEditingProject(null);
+      setModal({
+        isOpen: true,
+        title: 'Success!',
+        message: 'Project updated successfully.',
+        type: 'success'
+      });
     } else {
-      alert('Failed to update project: ' + result.error);
+      setModal({
+        isOpen: true,
+        title: 'Error',
+        message: `Failed to update project: ${result.error}`,
+        type: 'error'
+      });
     }
   };
 
-  const deleteProjectHandler = async (projectId) => {
-    if (window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
-      const result = await deleteProject(projectId);
-      if (!result.success) {
-        alert('Failed to delete project: ' + result.error);
+  const deleteProjectHandler = (projectId) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Project',
+      message: 'Are you sure you want to delete this project? This action cannot be undone.',
+      onConfirm: async () => {
+        const result = await deleteProject(projectId);
+        if (result.success) {
+          setModal({
+            isOpen: true,
+            title: 'Success!',
+            message: 'Project deleted successfully.',
+            type: 'success'
+          });
+        } else {
+          setModal({
+            isOpen: true,
+            title: 'Error',
+            message: `Failed to delete project: ${result.error}`,
+            type: 'error'
+          });
+        }
       }
-    }
+    });
   };
 
-  const changeProjectStatus = (projectId, newStatus) => {
-    setProjects(projects.map(project => 
-      project.id === projectId ? { ...project, status: newStatus } : project
-    ));
+  const changeProjectStatus = async (projectId, newStatus) => {
+    const result = await updateProject(projectId, { status: newStatus });
+    if (result.success) {
+      setModal({
+        isOpen: true,
+        title: 'Success!',
+        message: `Project status updated to ${newStatus}.`,
+        type: 'success'
+      });
+    } else {
+      setModal({
+        isOpen: true,
+        title: 'Error',
+        message: `Failed to update project status: ${result.error}`,
+        type: 'error'
+      });
+    }
   };
 
   // Use projects directly from context (they're already filtered by the backend)
@@ -155,12 +212,12 @@ const ProjectsPage = () => {
               </svg>
               <h3 className="mt-2 text-sm font-medium text-gray-900">No projects found</h3>
               <p className="mt-1 text-sm text-gray-500">
-                {searchTerm || statusFilter !== 'all' 
+                {filters.search || filters.status !== '' 
                   ? 'Try adjusting your search or filter criteria.'
                   : 'Get started by creating a new project.'
                 }
               </p>
-              {!searchTerm && statusFilter === 'all' && (
+              {!filters.search && filters.status === '' && (
                 <div className="mt-6">
                   <button
                     onClick={() => setShowAddProject(true)}
@@ -244,18 +301,18 @@ const ProjectsPage = () => {
                     </div>
 
                     {/* Team Members */}
-                    {project.teamMembers.length > 0 && (
+                    {project.members && project.members.length > 0 && (
                       <div className="mb-4">
                         <span className="text-sm text-gray-500">Team:</span>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {project.teamMembers.slice(0, 3).map((member, index) => (
+                          {project.members.slice(0, 3).map((member, index) => (
                             <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                              {member}
+                              {member.user ? `${member.user.firstName} ${member.user.lastName}` : member.role}
                             </span>
                           ))}
-                          {project.teamMembers.length > 3 && (
+                          {project.members.length > 3 && (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                              +{project.teamMembers.length - 3}
+                              +{project.members.length - 3}
                             </span>
                           )}
                         </div>
@@ -264,9 +321,9 @@ const ProjectsPage = () => {
 
                     {/* Task Summary */}
                     <div className="flex items-center justify-between text-sm text-gray-600">
-                      <span>Tasks: {project.completedTasks}/{project.tasks}</span>
+                      <span>Tasks: {project.taskStats ? project.taskStats.completed : 0}/{project.taskStats ? project.taskStats.total : 0}</span>
                       <span className="text-indigo-600 font-medium">
-                        {project.tasks > 0 ? Math.round((project.completedTasks / project.tasks) * 100) : 0}% Complete
+                        {project.taskStats && project.taskStats.total > 0 ? Math.round((project.taskStats.completed / project.taskStats.total) * 100) : 0}% Complete
                       </span>
                     </div>
 
@@ -326,12 +383,29 @@ const ProjectsPage = () => {
             </div>
             <EditProjectForm 
               project={editingProject} 
-              onSubmit={updateProject} 
+              onSubmit={updateProjectHandler} 
               onCancel={() => setEditingProject(null)} 
             />
           </div>
         </div>
       )}
+
+      {/* Modals */}
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={() => setModal({ ...modal, isOpen: false })}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+      />
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+      />
     </div>
   );
 };
@@ -344,11 +418,8 @@ const AddProjectForm = ({ onSubmit, onCancel }) => {
     status: 'Planning',
     priority: 'Medium',
     startDate: new Date().toISOString().split('T')[0],
-    endDate: '',
-    teamMembers: []
+    endDate: ''
   });
-
-  const [newMember, setNewMember] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -513,11 +584,8 @@ const EditProjectForm = ({ project, onSubmit, onCancel }) => {
     status: project.status,
     priority: project.priority,
     startDate: project.startDate,
-    endDate: project.endDate,
-    teamMembers: [...project.teamMembers]
+    endDate: project.endDate
   });
-
-  const [newMember, setNewMember] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();

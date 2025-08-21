@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { TaskProvider } from './contexts/TaskContext';
 import { ProjectProvider } from './contexts/ProjectContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
@@ -28,17 +29,23 @@ function App() {
               } />
               <Route path="/projects" element={
                 <ProtectedRoute>
-                  <ProjectsPage />
+                  <ErrorBoundary>
+                    <ProjectsPage />
+                  </ErrorBoundary>
                 </ProtectedRoute>
               } />
               <Route path="/calendar" element={
                 <ProtectedRoute>
-                  <CalendarPage />
+                  <ErrorBoundary>
+                    <CalendarPage />
+                  </ErrorBoundary>
                 </ProtectedRoute>
               } />
               <Route path="/reports" element={
                 <ProtectedRoute>
-                  <ReportsPage />
+                  <ErrorBoundary>
+                    <ReportsPage />
+                  </ErrorBoundary>
                 </ProtectedRoute>
               } />
               <Route path="/settings" element={

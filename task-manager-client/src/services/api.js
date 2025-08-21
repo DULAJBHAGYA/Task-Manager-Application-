@@ -230,6 +230,24 @@ class ApiService {
     const endpoint = queryString ? `/reports?${queryString}` : '/reports';
     return this.request(endpoint);
   }
+
+  async getDashboardAnalytics(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/reports/dashboard?${queryString}` : '/reports/dashboard';
+    return this.request(endpoint);
+  }
+
+  async getTaskAnalytics(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/reports/tasks?${queryString}` : '/reports/tasks';
+    return this.request(endpoint);
+  }
+
+  async getProjectAnalytics(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = queryString ? `/reports/projects?${queryString}` : '/reports/projects';
+    return this.request(endpoint);
+  }
 }
 
 // Create and export a singleton instance

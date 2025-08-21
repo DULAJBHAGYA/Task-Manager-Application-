@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import TopBar from '../components/TopBar';
 import FiltersAndSearch from '../components/FiltersAndSearch';
@@ -6,6 +7,8 @@ import TaskList from '../components/TaskList';
 import AddTaskForm from '../components/AddTaskForm';
 import EditTaskForm from '../components/EditTaskForm';
 import { useTasks } from '../contexts/TaskContext';
+import Modal from '../components/Modal';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const DashboardPage = () => {
   const { 
@@ -23,6 +26,8 @@ const DashboardPage = () => {
   const [showAddTask, setShowAddTask] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info' });
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
 
   // Tasks are automatically loaded by TaskContext on mount
 
@@ -30,8 +35,19 @@ const DashboardPage = () => {
     const result = await createTask(taskData);
     if (result.success) {
       setShowAddTask(false);
+      setModal({
+        isOpen: true,
+        title: 'Success!',
+        message: 'Task created successfully.',
+        type: 'success'
+      });
     } else {
-      alert('Failed to create task: ' + result.error);
+      setModal({
+        isOpen: true,
+        title: 'Error',
+        message: `Failed to create task: ${result.error}`,
+        type: 'error'
+      });
     }
   };
 
@@ -39,18 +55,46 @@ const DashboardPage = () => {
     const result = await updateTask(taskId, updatedData);
     if (result.success) {
       setEditingTask(null);
+      setModal({
+        isOpen: true,
+        title: 'Success!',
+        message: 'Task updated successfully.',
+        type: 'success'
+      });
     } else {
-      alert('Failed to update task: ' + result.error);
+      setModal({
+        isOpen: true,
+        title: 'Error',
+        message: `Failed to update task: ${result.error}`,
+        type: 'error'
+      });
     }
   };
 
-  const deleteTaskHandler = async (taskId) => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      const result = await deleteTask(taskId);
-      if (!result.success) {
-        alert('Failed to delete task: ' + result.error);
+  const deleteTaskHandler = (taskId) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Task',
+      message: 'Are you sure you want to delete this task? This action cannot be undone.',
+      onConfirm: async () => {
+        const result = await deleteTask(taskId);
+        if (result.success) {
+          setModal({
+            isOpen: true,
+            title: 'Success!',
+            message: 'Task deleted successfully.',
+            type: 'success'
+          });
+        } else {
+          setModal({
+            isOpen: true,
+            title: 'Error',
+            message: `Failed to delete task: ${result.error}`,
+            type: 'error'
+          });
+        }
       }
-    }
+    });
   };
 
   const changeTaskStatus = async (taskId, newStatus) => {
@@ -178,6 +222,23 @@ const DashboardPage = () => {
           </div>
         </div>
       )}
+
+      {/* Modals */}
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={() => setModal({ ...modal, isOpen: false })}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+      />
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+      />
     </div>
   );
 };

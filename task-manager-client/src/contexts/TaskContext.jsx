@@ -208,33 +208,33 @@ export const TaskProvider = ({ children }) => {
     loadTasks();
     loadStats();
     
-    // Connect to WebSocket for real-time updates
-    const token = localStorage.getItem('token');
-    if (token) {
-      websocketService.connect(token);
-      
-      // Subscribe to real-time updates
-      const unsubscribeTaskUpdate = websocketService.subscribe('TASK_UPDATED', (task) => {
-        setTasks(prevTasks => 
-          prevTasks.map(t => t.id === task.id ? task : t)
-        );
-      });
-      
-      const unsubscribeTaskCreated = websocketService.subscribe('TASK_CREATED', (task) => {
-        setTasks(prevTasks => [task, ...prevTasks]);
-      });
-      
-      const unsubscribeTaskDeleted = websocketService.subscribe('TASK_DELETED', (taskId) => {
-        setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
-      });
-      
-      // Cleanup subscriptions on unmount
-      return () => {
-        unsubscribeTaskUpdate();
-        unsubscribeTaskCreated();
-        unsubscribeTaskDeleted();
-      };
-    }
+            // TODO: Enable WebSocket for real-time updates when backend supports it
+        // const token = localStorage.getItem('token');
+        // if (token) {
+        //   websocketService.connect(token);
+        //   
+        //   // Subscribe to real-time updates
+        //   const unsubscribeTaskUpdate = websocketService.subscribe('TASK_UPDATED', (task) => {
+        //     setTasks(prevTasks => 
+        //       prevTasks.map(t => t.id === task.id ? task : t)
+        //     );
+        //   });
+        //   
+        //   const unsubscribeTaskCreated = websocketService.subscribe('TASK_CREATED', (task) => {
+        //     setTasks(prevTasks => [task, ...prevTasks]);
+        //   });
+        //   
+        //   const unsubscribeTaskDeleted = websocketService.subscribe('TASK_DELETED', (taskId) => {
+        //     setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
+        //   });
+        //   
+        //   // Cleanup subscriptions on unmount
+        //   return () => {
+        //     unsubscribeTaskUpdate();
+        //     unsubscribeTaskCreated();
+        //     unsubscribeTaskDeleted();
+        //   };
+        // }
   }, []);
 
   // Reload tasks when filters change

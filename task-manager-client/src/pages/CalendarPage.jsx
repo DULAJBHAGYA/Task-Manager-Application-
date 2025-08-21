@@ -4,17 +4,20 @@ import Sidebar from '../components/Sidebar';
 import TopBar from '../components/TopBar';
 import { useTasks } from '../contexts/TaskContext';
 import apiService from '../services/api';
+import Modal from '../components/Modal';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const CalendarPage = () => {
   const navigate = useNavigate();
-  const { tasks, loading, error } = useTasks();
+  const { tasks, loading, error, updateTask, deleteTask, createTask } = useTasks();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [calendarTasks, setCalendarTasks] = useState([]);
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [viewMode, setViewMode] = useState('month'); // month, week, day
+  const [modal, setModal] = useState({ isOpen: false, title: '', message: '', type: 'info' });
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, title: '', message: '', onConfirm: null });
 
   // Load calendar tasks from backend
   useEffect(() => {
@@ -37,33 +40,118 @@ const CalendarPage = () => {
     loadCalendarTasks();
   }, [currentDate]);
 
-  const addEvent = (eventData) => {
-    const newEvent = {
-      id: Date.now(),
-      title: eventData.title,
-      description: eventData.description || '',
-      date: eventData.date,
-      time: eventData.time,
-      duration: eventData.duration || 0,
-      type: eventData.type || 'event',
-      priority: eventData.priority || 'Medium',
-      attendees: eventData.attendees || []
-    };
-    setEvents([...events, newEvent]);
-    setShowAddEvent(false);
+  const addEvent = async (eventData) => {
+    try {
+      // Convert form data to task format
+      const taskData = {
+        title: eventData.title,
+        description: eventData.description,
+        dueDate: new Date(eventData.date).toISOString(),
+        priority: eventData.priority || 'Medium',
+        status: eventData.status || 'Pending'
+      };
+      
+      const result = await createTask(taskData);
+      if (result.success) {
+        setShowAddEvent(false);
+        setModal({
+          isOpen: true,
+          title: 'Success!',
+          message: 'Task created successfully.',
+          type: 'success'
+        });
+      } else {
+        setModal({
+          isOpen: true,
+          title: 'Error',
+          message: `Failed to create task: ${result.error}`,
+          type: 'error'
+        });
+      }
+    } catch (error) {
+      console.error('Error creating task:', error);
+      setModal({
+        isOpen: true,
+        title: 'Error',
+        message: 'Failed to create task',
+        type: 'error'
+      });
+    }
   };
 
-  const updateEvent = (eventId, updatedData) => {
-    setEvents(events.map(event => 
-      event.id === eventId ? { ...event, ...updatedData } : event
-    ));
-    setEditingEvent(null);
+  const updateEvent = async (eventId, updatedData) => {
+    try {
+      // Convert form data to task format
+      const taskData = {
+        title: updatedData.title,
+        description: updatedData.description,
+        dueDate: new Date(updatedData.date).toISOString(),
+        priority: updatedData.priority,
+        status: updatedData.status
+      };
+      
+      const result = await updateTask(eventId, taskData);
+      if (result.success) {
+        setEditingEvent(null);
+        setModal({
+          isOpen: true,
+          title: 'Success!',
+          message: 'Task updated successfully.',
+          type: 'success'
+        });
+      } else {
+        setModal({
+          isOpen: true,
+          title: 'Error',
+          message: `Failed to update task: ${result.error}`,
+          type: 'error'
+        });
+      }
+    } catch (error) {
+      console.error('Error updating task:', error);
+      setModal({
+        isOpen: true,
+        title: 'Error',
+        message: 'Failed to update task',
+        type: 'error'
+      });
+    }
   };
 
   const deleteEvent = (eventId) => {
-    if (window.confirm('Are you sure you want to delete this event?')) {
-      setEvents(events.filter(event => event.id !== eventId));
-    }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Task',
+      message: 'Are you sure you want to delete this task? This action cannot be undone.',
+      onConfirm: async () => {
+        try {
+          const result = await deleteTask(eventId);
+          if (result.success) {
+            setModal({
+              isOpen: true,
+              title: 'Success!',
+              message: 'Task deleted successfully.',
+              type: 'success'
+            });
+          } else {
+            setModal({
+              isOpen: true,
+              title: 'Error',
+              message: `Failed to delete task: ${result.error}`,
+              type: 'error'
+            });
+          }
+        } catch (error) {
+          console.error('Error deleting task:', error);
+          setModal({
+            isOpen: true,
+            title: 'Error',
+            message: 'Failed to delete task',
+            type: 'error'
+          });
+        }
+      }
+    });
   };
 
   // Calendar navigation
@@ -183,69 +271,37 @@ const CalendarPage = () => {
         <div className="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             {/* Calendar Navigation */}
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={goToPreviousMonth}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              
-              <h2 className="text-2xl font-bold text-gray-900">
-                {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-              </h2>
-              
-              <button
-                onClick={goToNextMonth}
-                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-              
-              <button
-                onClick={goToToday}
-                className="px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 transition-colors"
-              >
-                Today
-              </button>
-            </div>
-
-            {/* View Mode Toggle */}
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setViewMode('month')}
-                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                  viewMode === 'month' 
-                    ? 'bg-indigo-600 text-white' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                Month
-              </button>
-              <button
-                onClick={() => setViewMode('week')}
-                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                  viewMode === 'week' 
-                    ? 'bg-indigo-600 text-white' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                Week
-              </button>
-              <button
-                onClick={() => setViewMode('day')}
-                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                  viewMode === 'day' 
-                    ? 'bg-indigo-600 text-white' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                Day
-              </button>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={goToPreviousMonth}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </h2>
+                
+                <button
+                  onClick={goToNextMonth}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+                
+                <button
+                  onClick={goToToday}
+                  className="px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100 transition-colors"
+                >
+                  Today
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -436,6 +492,23 @@ const CalendarPage = () => {
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      <Modal
+        isOpen={modal.isOpen}
+        onClose={() => setModal({ ...modal, isOpen: false })}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+      />
+
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+      />
     </div>
   );
 };
@@ -448,35 +521,16 @@ const AddEventForm = ({ onSubmit, onCancel }) => {
     date: new Date().toISOString().split('T')[0],
     time: '09:00',
     duration: 60,
-    type: 'event',
+    type: 'task',
     priority: 'Medium',
-    attendees: []
+    status: 'Pending'
   });
-
-  const [newAttendee, setNewAttendee] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (formData.title.trim()) {
       onSubmit(formData);
     }
-  };
-
-  const addAttendee = () => {
-    if (newAttendee.trim() && !formData.attendees.includes(newAttendee.trim())) {
-      setFormData({
-        ...formData,
-        attendees: [...formData.attendees, newAttendee.trim()]
-      });
-      setNewAttendee('');
-    }
-  };
-
-  const removeAttendee = (attendee) => {
-    setFormData({
-      ...formData,
-      attendees: formData.attendees.filter(a => a !== attendee)
-    });
   };
 
   return (
@@ -567,42 +621,20 @@ const AddEventForm = ({ onSubmit, onCancel }) => {
           <option value="High">High</option>
         </select>
       </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Attendees</label>
-        <div className="flex gap-2 mb-2">
-          <input
-            type="text"
-            value={newAttendee}
-            onChange={(e) => setNewAttendee(e.target.value)}
-            placeholder="Add attendee"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-          <button
-            type="button"
-            onClick={addAttendee}
-            className="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <select
+            value={formData.status}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           >
-            Add
-          </button>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
         </div>
-        {formData.attendees.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {formData.attendees.map((attendee, index) => (
-              <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                {attendee}
-                <button
-                  type="button"
-                  onClick={() => removeAttendee(attendee)}
-                  className="ml-1 text-indigo-600 hover:text-indigo-800"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
 
       <div className="flex justify-end space-x-3 pt-4">
         <button
@@ -628,38 +660,19 @@ const EditEventForm = ({ event, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
     title: event.title,
     description: event.description,
-    date: event.date,
-    time: event.time,
-    duration: event.duration,
-    type: event.type,
-    priority: event.priority,
-    attendees: [...event.attendees]
+    date: event.dueDate ? new Date(event.dueDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    time: event.time || '',
+    duration: event.duration || 60,
+    type: event.type || 'task',
+    priority: event.priority || 'Medium',
+    status: event.status || 'Pending'
   });
-
-  const [newAttendee, setNewAttendee] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (formData.title.trim()) {
       onSubmit(event.id, formData);
     }
-  };
-
-  const addAttendee = () => {
-    if (newAttendee.trim() && !formData.attendees.includes(newAttendee.trim())) {
-      setFormData({
-        ...formData,
-        attendees: [...formData.attendees, newAttendee.trim()]
-      });
-      setNewAttendee('');
-    }
-  };
-
-  const removeAttendee = (attendee) => {
-    setFormData({
-      ...formData,
-      attendees: formData.attendees.filter(a => a !== attendee)
-    });
   };
 
   return (
@@ -748,42 +761,20 @@ const EditEventForm = ({ event, onSubmit, onCancel }) => {
           <option value="High">High</option>
         </select>
       </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Attendees</label>
-        <div className="flex gap-2 mb-2">
-          <input
-            type="text"
-            value={newAttendee}
-            onChange={(e) => setNewAttendee(e.target.value)}
-            placeholder="Add attendee"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-          <button
-            type="button"
-            onClick={addAttendee}
-            className="px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <select
+            value={formData.status}
+            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           >
-            Add
-          </button>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
         </div>
-        {formData.attendees.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {formData.attendees.map((attendee, index) => (
-              <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                {attendee}
-                <button
-                  type="button"
-                  onClick={() => removeAttendee(attendee)}
-                  className="ml-1 text-indigo-600 hover:text-indigo-800"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
 
       <div className="flex justify-end space-x-3 pt-4">
         <button

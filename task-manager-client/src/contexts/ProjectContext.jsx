@@ -241,47 +241,47 @@ export const ProjectProvider = ({ children }) => {
     loadProjects();
     loadStats();
     
-    // Connect to WebSocket for real-time updates
-    const token = localStorage.getItem('token');
-    if (token) {
-      websocketService.connect(token);
-      
-      // Subscribe to real-time updates
-      const unsubscribeProjectUpdate = websocketService.subscribe('PROJECT_UPDATED', (project) => {
-        setProjects(prevProjects => 
-          prevProjects.map(p => p.id === project.id ? project : p)
-        );
-      });
-      
-      const unsubscribeProjectCreated = websocketService.subscribe('PROJECT_CREATED', (project) => {
-        setProjects(prevProjects => [project, ...prevProjects]);
-      });
-      
-      const unsubscribeProjectDeleted = websocketService.subscribe('PROJECT_DELETED', (projectId) => {
-        setProjects(prevProjects => prevProjects.filter(p => p.id !== projectId));
-      });
-      
-      const unsubscribeMemberAdded = websocketService.subscribe('MEMBER_ADDED', (data) => {
-        setProjects(prevProjects => 
-          prevProjects.map(p => p.id === data.projectId ? data.project : p)
-        );
-      });
-      
-      const unsubscribeMemberRemoved = websocketService.subscribe('MEMBER_REMOVED', (data) => {
-        setProjects(prevProjects => 
-          prevProjects.map(p => p.id === data.projectId ? data.project : p)
-        );
-      });
-      
-      // Cleanup subscriptions on unmount
-      return () => {
-        unsubscribeProjectUpdate();
-        unsubscribeProjectCreated();
-        unsubscribeProjectDeleted();
-        unsubscribeMemberAdded();
-        unsubscribeMemberRemoved();
-      };
-    }
+            // TODO: Enable WebSocket for real-time updates when backend supports it
+        // const token = localStorage.getItem('token');
+        // if (token) {
+        //   websocketService.connect(token);
+        //   
+        //   // Subscribe to real-time updates
+        //   const unsubscribeProjectUpdate = websocketService.subscribe('PROJECT_UPDATED', (project) => {
+        //     setProjects(prevProjects => 
+        //       prevProjects.map(p => p.id === project.id ? project : p)
+        //     );
+        //   });
+        //   
+        //   const unsubscribeProjectCreated = websocketService.subscribe('PROJECT_CREATED', (project) => {
+        //     setProjects(prevProjects => [project, ...prevProjects]);
+        //   });
+        //   
+        //   const unsubscribeProjectDeleted = websocketService.subscribe('PROJECT_DELETED', (projectId) => {
+        //     setProjects(prevProjects => prevProjects.filter(p => p.id !== projectId));
+        //   });
+        //   
+        //   const unsubscribeMemberAdded = websocketService.subscribe('MEMBER_ADDED', (data) => {
+        //     setProjects(prevProjects => 
+        //       prevProjects.map(p => p.id === data.projectId ? data.project : p)
+        //     );
+        //   });
+        //   
+        //   const unsubscribeMemberRemoved = websocketService.subscribe('MEMBER_REMOVED', (data) => {
+        //     setProjects(prevProjects => 
+        //       prevProjects.map(p => p.id === data.projectId ? data.project : p)
+        //     );
+        //   });
+        //   
+        //   // Cleanup subscriptions on unmount
+        //   return () => {
+        //     unsubscribeProjectUpdate();
+        //     unsubscribeProjectCreated();
+        //     unsubscribeProjectDeleted();
+        //     unsubscribeMemberAdded();
+        //     unsubscribeMemberRemoved();
+        //   };
+        // }
   }, []);
 
   // Reload projects when filters change

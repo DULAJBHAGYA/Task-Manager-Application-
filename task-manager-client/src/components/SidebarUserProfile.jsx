@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ConfirmationModal from './ConfirmationModal';
 
 const SidebarUserProfile = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const handleLogout = async () => {
     await logout();
@@ -37,7 +39,7 @@ const SidebarUserProfile = () => {
           </p>
         </div>
         <button 
-          onClick={handleLogout}
+          onClick={() => setShowConfirmation(true)}
           className="text-xs text-gray-500 hover:text-indigo-600 transition-colors"
           title="Sign Out"
         >
@@ -46,6 +48,19 @@ const SidebarUserProfile = () => {
           </svg>
         </button>
       </div>
+      {showConfirmation && (
+        <ConfirmationModal
+          isOpen={showConfirmation}
+          onClose={() => setShowConfirmation(false)}
+          onConfirm={handleLogout}
+          title="Sign Out"
+          message="Are you sure you want to sign out?"
+          confirmText="Sign Out"
+          cancelText="Cancel"
+          confirmButtonClass="bg-red-600 hover:bg-red-700"
+          icon="warning"
+        />
+      )}
     </div>
   );
 };
