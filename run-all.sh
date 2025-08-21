@@ -1,117 +1,120 @@
 #!/bin/bash
 
-echo "🚀 Starting TaskMate Application..."
+echo "Starting TaskMate Application..."
 
-# Function to check if a port is in use
-check_port() {
-    if lsof -Pi :$1 -sTCP:LISTEN -t >/dev/null ; then
-        echo "✅ Port $1 is already in use"
-        return 0
-    else
-        echo "❌ Port $1 is not in use"
-        return 1
-    fi
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_status() {
+    echo -e "${GREEN}[INFO]${NC} $1"
 }
 
-# Function to wait for a service to be ready
-wait_for_service() {
-    local url=$1
-    local service_name=$2
-    local max_attempts=30
-    local attempt=1
-    
-    echo "⏳ Waiting for $service_name to be ready..."
-    
-    while [ $attempt -le $max_attempts ]; do
-        if curl -s "$url" >/dev/null 2>&1; then
-            echo "✅ $service_name is ready!"
-            return 0
-        fi
-        
-        echo "   Attempt $attempt/$max_attempts - $service_name not ready yet..."
-        sleep 2
-        attempt=$((attempt + 1))
-    done
-    
-    echo "❌ $service_name failed to start after $max_attempts attempts"
-    return 1
+print_warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
 }
+
+print_error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+print_header() {
+    echo -e "${BLUE}[HEADER]${NC} $1"
+}
+
+# Check if Docker is running
+if ! docker info > /dev/null 2>&1; then
+    print_error "Docker is not running. Please start Docker first."
+    exit 1
+fi
+
+# Check if docker-compose.yml exists
+if [ ! -f "docker-compose.yml" ]; then
+    print_error "docker-compose.yml not found in current directory"
+    exit 1
+fi
+
+print_header "Setting up TaskMate Application..."
 
 # Start PostgreSQL database
-echo "🐘 Starting PostgreSQL database..."
-if ! check_port 5432; then
-    docker-compose up -d postgres
-    sleep 5
-fi
+print_status "Starting PostgreSQL database..."
+docker-compose up -d postgres
 
 # Wait for database to be ready
-echo "⏳ Waiting for database to be ready..."
-until docker-compose exec -T postgres pg_isready -U taskmate_user -d taskmate >/dev/null 2>&1; do
-    echo "   Database not ready yet..."
-    sleep 2
-done
-echo "✅ Database is ready!"
+print_status "Waiting for database to be ready..."
+sleep 10
 
-# Start backend server
-echo "🔧 Starting backend server..."
-if ! check_port 5001; then
-    cd task-manager-server
-    npm run dev &
-    BACKEND_PID=$!
-    cd ..
-    sleep 3
+# Check if database is running
+if docker-compose ps postgres | grep -q "Up"; then
+    print_status "Database is running successfully"
+else
+    print_error "Failed to start database"
+    exit 1
 fi
 
-# Wait for backend to be ready
-if wait_for_service "http://localhost:5001/api/auth/signin" "Backend Server"; then
-    echo "✅ Backend server is running on http://localhost:5001"
+# Start backend server
+print_status "Starting backend server..."
+cd task-manager-server
+
+# Check if node_modules exists
+if [ ! -d "node_modules" ]; then
+    print_warning "Installing backend dependencies..."
+    npm install
+fi
+
+# Start backend in background
+npm start &
+BACKEND_PID=$!
+
+# Wait for backend to start
+sleep 5
+
+# Check if backend is running
+if curl -s http://localhost:5001/health > /dev/null; then
+    print_status "Backend server is running successfully"
 else
-    echo "❌ Backend server failed to start"
-    exit 1
+    print_warning "Backend server might still be starting up..."
 fi
 
 # Start frontend client
-echo "🎨 Starting frontend client..."
-if ! check_port 5173; then
-    cd task-manager-client
-    npm run dev &
-    FRONTEND_PID=$!
-    cd ..
-    sleep 3
+print_status "Starting frontend client..."
+cd ../task-manager-client
+
+# Check if node_modules exists
+if [ ! -d "node_modules" ]; then
+    print_warning "Installing frontend dependencies..."
+    npm install
 fi
 
-# Wait for frontend to be ready
-if wait_for_service "http://localhost:5173" "Frontend Client"; then
-    echo "✅ Frontend client is running on http://localhost:5173"
-else
-    echo "❌ Frontend client failed to start"
-    exit 1
-fi
+# Start frontend in background
+npm run dev &
+FRONTEND_PID=$!
+
+# Wait for frontend to start
+sleep 5
+
+print_header "TaskMate Application is starting up!"
 
 echo ""
-echo "🎉 TaskMate Application is now running!"
+echo "Services Status:"
+echo "Database:  http://localhost:5432"
+echo "Backend:   http://localhost:5001"
+echo "Frontend:  http://localhost:5173"
 echo ""
-echo "📱 Frontend: http://localhost:5173"
-echo "🔧 Backend:  http://localhost:5001"
-echo "🐘 Database: localhost:5432"
+echo "To stop all services, press Ctrl+C"
 echo ""
-echo "👤 Demo Account:"
-echo "   Email: demo@example.com"
-echo "   Password: Demo123!@#"
-echo ""
-echo "Press Ctrl+C to stop all services"
 
 # Function to cleanup on exit
 cleanup() {
-    echo ""
-    echo "🛑 Stopping services..."
-    if [ ! -z "$BACKEND_PID" ]; then
-        kill $BACKEND_PID 2>/dev/null
-    fi
-    if [ ! -z "$FRONTEND_PID" ]; then
-        kill $FRONTEND_PID 2>/dev/null
-    fi
-    echo "✅ Services stopped"
+    print_status "Stopping services..."
+    kill $BACKEND_PID 2>/dev/null
+    kill $FRONTEND_PID 2>/dev/null
+    docker-compose down
+    print_status "All services stopped"
     exit 0
 }
 
